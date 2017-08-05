@@ -43,7 +43,7 @@ let prev_usdt_eth = 0.0;
 let bithumb_ticker = {
 
 }
-
+let bittrex_markets = [];
 
 
 function run_bittrex_ticker() {
@@ -61,8 +61,21 @@ function run_bittrex_ticker() {
     })
 }
 
+
+
+function run_bittrex_markets() {
+    request('https://bittrex.com/api/v1.1/public/getmarkets', function (error, response, body) {
+        if (!error && response.statusCode == 200) {
+            // console.log(JSON.parse(body))
+            bittrex_markets = JSON.parse(body).result
+        }
+    })
+}
+
+run_bittrex_markets()
 run_bittrex_ticker()
 setInterval(run_bittrex_ticker, 5000)
+setInterval(run_bittrex_markets, 60000)
 
 
 let usd = 0;
@@ -315,6 +328,9 @@ bot.on('message', (msg) => {
         bot.sendMessage(chatId, m)
     }
     else{
+
+        let photoUrl = _.find(bittrex_markets, {'MarketName':msg.text}).LogoUrl
+        bot.sendPhoto(chatId,photoUrl);
         let returnMsg = bittrextStringParse(_.find(bittrex_ticker, {'MarketName':msg.text.replace('/','').toUpperCase()}))
         bot.sendMessage(chatId, returnMsg,{parse_mode : "HTML"})
     }
