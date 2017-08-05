@@ -37,7 +37,8 @@ let korbit_ticker = {
 
 let current_usdt_btc = 0.0;
 let current_usdt_eth = 0.0;
-
+let prev_usdt_btc = 0.0;
+let prev_usdt_eth = 0.0;
 
 let bithumb_ticker = {
 
@@ -53,6 +54,8 @@ function run_bittrex_ticker() {
             current_usdt_btc = _.find(bittrex_ticker, {'MarketName':'USDT-BTC'}).Last
             current_usdt_eth = _.find(bittrex_ticker, {'MarketName':'USDT-ETH'}).Last
             // console.log(bittrex_ticker.result) // Print the google web page.
+            prev_usdt_btc = _.find(bittrex_ticker, {'MarketName':'USDT-BTC'}).Prev
+            prev_usdt_eth = _.find(bittrex_ticker, {'MarketName':'USDT-ETH'}).Prev
 
         }
     })
@@ -198,7 +201,7 @@ function getKeySymbol(marketName){
 }
 
 function bittrextStringParse(tickerData){
-    console.log(tickerData)
+    // console.log(tickerData)
     if(tickerData !== undefined){
         let marketTitle = tickerData.MarketName
 
@@ -210,12 +213,16 @@ function bittrextStringParse(tickerData){
         let prevUSD;
 
         if(key==="BTC"){
-            lastUSD = "$" + parseFloat(tickerData.Last).toFixed(8) * current_usdt_btc
-            prevUSD = "$" + parseFloat(tickerData.PrevDay).toFixed(8) * current_usdt_btc
+            lastUSD = " $" + (parseFloat(tickerData.Last) * current_usdt_btc).toFixed(4)
+            prevUSD = " $" + (parseFloat(tickerData.PrevDay)* prev_usdt_btc).toFixed(4)
         }
         if(key==="ETH"){
-            lastUSD = "$" + parseFloat(tickerData.Last).toFixed(8) * current_usdt_eth
-            prevUSD = "$" + parseFloat(tickerData.PrevDay).toFixed(8) * current_usdt_eth
+            lastUSD = " $" + (parseFloat(tickerData.Last) * current_usdt_eth).toFixed(4)
+            prevUSD = " $" + (parseFloat(tickerData.PrevDay) * prev_usdt_eth).toFixed(4)
+        }
+        if(key==="USDT"){
+            lastUSD =" $" + parseFloat(tickerData.Last).toFixed(4)
+            prevUSD =" $" + parseFloat(tickerData.PrevDay).toFixed(4)
         }
 
 
@@ -228,15 +235,21 @@ function bittrextStringParse(tickerData){
         }
 
         let msg = "" +
-            "USDT-BTC Price: $<b>" + numberWithCommas(current_usdt_btc) + "</b>\r\n" +
-            "USDT-ETH Price: $<b>" + numberWithCommas(current_usdt_eth) + "</b>\r\n" +
-            "=========\r\n" +
-            "Market:"+tickerData.MarketName +
+            "Last BTC: 💰<b>" + numberWithCommas(current_usdt_btc) + "</b>\r\n" +
+            "Prev BTC: 💰<b>" + numberWithCommas(prev_usdt_btc) + "</b>\r\n" +
+            "BTC USD Change: " + (current_usdt_btc / prev_usdt_btc).toFixed(4) +
+            "" +
+            "Last ETH: 💰<b>" + numberWithCommas(current_usdt_eth) + "</b>\r\n" +
+            "Prev ETH: 💰<b>" + numberWithCommas(prev_usdt_eth) + "</b>\r\n" +
+            "ETH USD Change: " + (current_usdt_eth / prev_usdt_eth).toFixed(4) +
+
+            "=============\r\n" +
+            "Market:"+tickerData.MarketName + "\r\n" +
             "Last: <b>" + parseFloat(tickerData.Last).toFixed(8) + ` ${key}` + lastUSD +"</b>" +
             "Prev: <b>" + parseFloat(tickerData.PrevDay).toFixed(8) +` ${key}`+ prevUSD +"</b>\r\n" +
             changeText  +
             "Volume: " + tickerData.Volume + "\r\n" +
-            "=========\r\n"
+            "=============\r\n"
 
         return msg
     } else {
