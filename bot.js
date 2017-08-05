@@ -1,13 +1,13 @@
 
 const TelegramBot = require('node-telegram-bot-api');
 
-if(!process.env.TELEGRAM_API_TOKEN){
-    console.log("Telegram Bot Token Missing")
-    process.exit(1)
-}
+// if(!process.env.TELEGRAM_API_TOKEN){
+//     console.log("Telegram Bot Token Missing")
+//     process.exit(1)
+// }
 
-const token = process.env.TELEGRAM_API_TOKEN
-// const token = '414024453:AAHQg3QrU-_WG77FHUyB9WIuTYKJXl_l10E'
+// const token = process.env.TELEGRAM_API_TOKEN
+const token = '414024453:AAHQg3QrU-_WG77FHUyB9WIuTYKJXl_l10E'
 
 // '414024453:AAHQg3QrU-_WG77FHUyB9WIuTYKJXl_l10E'
 
@@ -54,8 +54,8 @@ function run_bittrex_ticker() {
             current_usdt_btc = _.find(bittrex_ticker, {'MarketName':'USDT-BTC'}).Last
             current_usdt_eth = _.find(bittrex_ticker, {'MarketName':'USDT-ETH'}).Last
             // console.log(bittrex_ticker.result) // Print the google web page.
-            prev_usdt_btc = _.find(bittrex_ticker, {'MarketName':'USDT-BTC'}).Prev
-            prev_usdt_eth = _.find(bittrex_ticker, {'MarketName':'USDT-ETH'}).Prev
+            prev_usdt_btc = _.find(bittrex_ticker, {'MarketName':'USDT-BTC'}).PrevDay
+            prev_usdt_eth = _.find(bittrex_ticker, {'MarketName':'USDT-ETH'}).PrevDay
 
         }
     })
@@ -211,18 +211,24 @@ function bittrextStringParse(tickerData){
 
         let lastUSD;
         let prevUSD;
+        let usdChange;
 
         if(key==="BTC"){
             lastUSD = " $" + (parseFloat(tickerData.Last) * current_usdt_btc).toFixed(4)
             prevUSD = " $" + (parseFloat(tickerData.PrevDay)* prev_usdt_btc).toFixed(4)
+
+            usdChange = (parseFloat(tickerData.Last) * current_usdt_btc) / (parseFloat(tickerData.PrevDay)* prev_usdt_btc).toFixed(4) * 100 - 100
         }
         if(key==="ETH"){
             lastUSD = " $" + (parseFloat(tickerData.Last) * current_usdt_eth).toFixed(4)
             prevUSD = " $" + (parseFloat(tickerData.PrevDay) * prev_usdt_eth).toFixed(4)
+            usdChange = (parseFloat(tickerData.Last) * current_usdt_eth) / (parseFloat(tickerData.PrevDay)* prev_usdt_eth).toFixed(4) * 100 - 100
         }
         if(key==="USDT"){
             lastUSD =" $" + parseFloat(tickerData.Last).toFixed(4)
             prevUSD =" $" + parseFloat(tickerData.PrevDay).toFixed(4)
+            usdChange = (parseFloat(tickerData.Last)) / (parseFloat(tickerData.PrevDay)).toFixed(4) * 100 - 100
+
         }
 
 
@@ -234,20 +240,30 @@ function bittrextStringParse(tickerData){
             changeText = "Change: <b>" +change+ "%</b>🤑🤑🤑\r\n"
         }
 
+        let usdChangeText;
+        // let usdChange = parseFloat(lastUSD / prevUSD).toFixed(4)
+        if(lastUSD / prevUSD < 0.0){
+            usdChangeText = "USD Change: <b>" +usdChange.toFixed(4)+ "%</b>😭😭😭\r\n"
+        }else{
+            usdChangeText = "USD Change: <b>" +usdChange.toFixed(4)+ "%</b>🤑🤑🤑\r\n"
+        }
+
+
         let msg = "" +
             "Last BTC: 💰<b>" + numberWithCommas(current_usdt_btc) + "</b>\r\n" +
             "Prev BTC: 💰<b>" + numberWithCommas(prev_usdt_btc) + "</b>\r\n" +
-            "BTC USD Change: " + (current_usdt_btc / prev_usdt_btc).toFixed(4) +
-            "" +
+            "BTC USD Change: " + (current_usdt_btc / prev_usdt_btc * 100 - 100).toFixed(4) + "%\r\n" +
+            "\r\n" +
             "Last ETH: 💰<b>" + numberWithCommas(current_usdt_eth) + "</b>\r\n" +
             "Prev ETH: 💰<b>" + numberWithCommas(prev_usdt_eth) + "</b>\r\n" +
-            "ETH USD Change: " + (current_usdt_eth / prev_usdt_eth).toFixed(4) +
+            "ETH USD Change: " + (current_usdt_eth / prev_usdt_eth * 100 - 100).toFixed(4) + "%\r\n"+
 
             "=============\r\n" +
-            "Market:"+tickerData.MarketName + "\r\n" +
-            "Last: <b>" + parseFloat(tickerData.Last).toFixed(8) + ` ${key}` + lastUSD +"</b>" +
+            "Market: <b>" +tickerData.MarketName + "</b>\r\n" +
+            "Last: <b>" + parseFloat(tickerData.Last).toFixed(8) + ` ${key}` + lastUSD +"</b>\r\n" +
             "Prev: <b>" + parseFloat(tickerData.PrevDay).toFixed(8) +` ${key}`+ prevUSD +"</b>\r\n" +
-            changeText  +
+            changeText  +"" +
+            usdChangeText + "" +
             "Volume: " + tickerData.Volume + "\r\n" +
             "=============\r\n"
 
