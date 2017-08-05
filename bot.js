@@ -329,7 +329,7 @@ bot.on('message', (msg) => {
     }
     else{
 
-        let photoUrl = _.find(bittrex_markets, {'MarketName':msg.text}).LogoUrl
+        let photoUrl = _.find(bittrex_markets, {'MarketName':msg.text.replace('/','').toUpperCase()}).LogoUrl
         bot.sendPhoto(chatId,photoUrl);
         let returnMsg = bittrextStringParse(_.find(bittrex_ticker, {'MarketName':msg.text.replace('/','').toUpperCase()}))
         bot.sendMessage(chatId, returnMsg,{parse_mode : "HTML"})
