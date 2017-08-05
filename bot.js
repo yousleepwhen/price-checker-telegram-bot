@@ -1,13 +1,13 @@
 
 const TelegramBot = require('node-telegram-bot-api');
 
-// if(!process.env.TELEGRAM_API_TOKEN){
-//     console.log("Telegram Bot Token Missing")
-//     process.exit(1)
-// }
+if(!process.env.TELEGRAM_API_TOKEN){
+    console.log("Telegram Bot Token Missing")
+    process.exit(1)
+}
 
-// const token = process.env.TELEGRAM_API_TOKEN
-const token = '414024453:AAHQg3QrU-_WG77FHUyB9WIuTYKJXl_l10E'
+const token = process.env.TELEGRAM_API_TOKEN
+// const token = '414024453:AAHQg3QrU-_WG77FHUyB9WIuTYKJXl_l10E'
 
 // '414024453:AAHQg3QrU-_WG77FHUyB9WIuTYKJXl_l10E'
 
