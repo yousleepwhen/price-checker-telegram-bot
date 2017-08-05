@@ -206,6 +206,19 @@ function bittrextStringParse(tickerData){
 
         let key = getKeySymbol(marketTitle)
 
+        let lastUSD;
+        let prevUSD;
+
+        if(key==="BTC"){
+            lastUSD = "$" + parseFloat(tickerData.Last).toFixed(8) * current_usdt_btc
+            prevUSD = "$" + parseFloat(tickerData.PrevDay).toFixed(8) * current_usdt_btc
+        }
+        if(key==="ETH"){
+            lastUSD = "$" + parseFloat(tickerData.Last).toFixed(8) * current_usdt_eth
+            prevUSD = "$" + parseFloat(tickerData.PrevDay).toFixed(8) * current_usdt_eth
+        }
+
+
 
         let changeText;
         if( change < 0.0 ){
@@ -215,13 +228,15 @@ function bittrextStringParse(tickerData){
         }
 
         let msg = "" +
-            "현재 USDT-BTC 가격: $<b>" + numberWithCommas(current_usdt_btc) + "</b>\r\n" +
-            "현재 USDT-ETH 가격: $<b>" + numberWithCommas(current_usdt_eth) + "</b>\r\n" +
-            "=======================================\r\n" +
-            tickerData.MarketName + ": Last(<b>" + numberWithCommas(parseFloat(tickerData.Last).toFixed(8)) + ` ${key}` +"</b>)" + " PrevDay(<b>" + numberWithCommas(parseFloat(tickerData.PrevDay).toFixed(8)) +` ${key}`+ "</b>)\r\n" +
+            "USDT-BTC Price: $<b>" + numberWithCommas(current_usdt_btc) + "</b>\r\n" +
+            "USDT-ETH Price: $<b>" + numberWithCommas(current_usdt_eth) + "</b>\r\n" +
+            "=========\r\n" +
+            "Market:"+tickerData.MarketName +
+            "Last: <b>" + parseFloat(tickerData.Last).toFixed(8) + ` ${key}` + lastUSD +"</b>" +
+            "Prev: <b>" + parseFloat(tickerData.PrevDay).toFixed(8) +` ${key}`+ prevUSD +"</b>\r\n" +
             changeText  +
             "Volume: " + tickerData.Volume + "\r\n" +
-            "=======================================\r\n"
+            "=========\r\n"
 
         return msg
     } else {
