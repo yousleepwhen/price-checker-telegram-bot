@@ -322,8 +322,8 @@ bot.on('message', (msg) => {
 
         let usdBtc = parseFloat(_.find(bittrex_ticker, {'MarketName':'USDT-BTC'}).Last)
         let usdEth = parseFloat(_.find(bittrex_ticker, {'MarketName':'USDT-ETH'}).Last)
-        let krwEth = parseFloat(bithumb_ticker.Eth.last)
-        let krwBtc = parseFloat(bithumb_ticker.Btc.last)
+        let krwEth = parseFloat(bithumb_ticker.ETH.last)
+        let krwBtc = parseFloat(bithumb_ticker.BTC.last)
 
         let usdKrwDash = usdDash * usd
         let usdKrwEth = usdEth * usd
@@ -337,29 +337,29 @@ bot.on('message', (msg) => {
         let ethRate = krwEth / usdKrwEth * 100 - 100
         let btcRate = krwBtc / usdKrwBtc * 100 - 100
 
-        if(rate > 0){
+        if(rate > 0.0){
             rateIcon = "👍"
         } else {
             rateIcon = "👎"
         }
 
-        if(ethRate > 0){
+        if(ethRate > 0.0){
             ethRateIcon = "👍"
         } else {
             ethRateIcon = "👎"
         }
-        if(btcRate > 0){
+        if(btcRate > 0.0){
             btcRateIcon = "👍"
         } else {
             btcRateIcon = "👎"
         }
-        let m = "🇰🇷😈  Bittrex:Bithumb" +
-            "DASH :<b>" + rate.toFixed(4)  + "% rateIcon</b>" +
-            "ETH  :<b>" + ethRate.toFixed(4) + "% ethRateIcon</b>" +
-            "BTC  :<b>" + btcRate.toFixed(4) + "% btcRateIcon</b>"
+        let m = "🇰🇷😈  Bittrex:Bithumb\r\n" +
+            "DASH :<b>" + rate.toFixed(4)  + "% </b>" +rateIcon+ "\r\n" +
+            "ETH  :<b>" + ethRate.toFixed(4) + "% </b>" +ethRateIcon+ "\r\n" +
+            "BTC  :<b>" + btcRate.toFixed(4) + "% </b>" + btcRateIcon
 
 
-        bot.sendMessage(chatId, m)
+        bot.sendMessage(chatId, m, {parse_mode : "HTML"})
     }
     else{
 
