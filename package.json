@@ -1,0 +1,16 @@
+{
+  "name": "price-checker-telegram-bot",
+  "version": "1.0.0",
+  "description": "korbit, bittrex market price checker bot",
+  "main": "bot.js",
+  "scripts": {
+    "start": "node bot.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "forsyphilis@gmail.com",
+  "license": "ISC",
+  "dependencies": {
+    "lodash": "^4.17.4",
+    "node-telegram-bot-api": "^0.27.1"
+  }
+}
