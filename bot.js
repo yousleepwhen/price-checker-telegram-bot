@@ -16,6 +16,14 @@ const token = process.env.TELEGRAM_API_TOKEN
 const _ = require('lodash')
 const request = require('request')
 
+
+let App = {
+
+}
+
+let global_market = {
+
+}
 let bittrex_ticker = {
 
 }
@@ -31,9 +39,12 @@ let korbit_ticker = {
 
     },
     bch:{
-
     }
 }
+let poloniex_ticker = {
+
+}
+
 
 let current_usdt_btc = 0.0;
 let current_usdt_eth = 0.0;
@@ -44,6 +55,22 @@ let bithumb_ticker = {
 
 }
 let bittrex_markets = [];
+
+
+https://api.coinmarketcap.com/v1/global/
+
+
+function run_coinmarketcap_global_data() {
+    request('https://api.coinmarketcap.com/v1/global/', function (error, response, body) {
+        if (!error && response.statusCode == 200) {
+            // console.log(JSON.parse(body))
+            global_market = JSON.parse(body)
+
+
+        }
+    })
+}
+
 
 
 function run_bittrex_ticker() {
@@ -61,8 +88,6 @@ function run_bittrex_ticker() {
     })
 }
 
-
-
 function run_bittrex_markets() {
     request('https://bittrex.com/api/v1.1/public/getmarkets', function (error, response, body) {
         if (!error && response.statusCode == 200) {
@@ -77,6 +102,24 @@ run_bittrex_ticker()
 setInterval(run_bittrex_ticker, 5000)
 setInterval(run_bittrex_markets, 60000)
 
+
+
+function run_poloniex_ticker() {
+    request('https://poloniex.com/public?command=returnTicker', function (error, response, body) {
+        if (!error && response.statusCode == 200) {
+            // console.log(JSON.parse(body))
+            poloniex_ticker = JSON.parse(body)
+
+        }
+    })
+}
+
+run_poloniex_ticker()
+setInterval(run_poloniex_ticker, 5000)
+
+
+run_coinmarketcap_global_data()
+setInterval(run_coinmarketcap_global_data, 10000)
 
 let usd = 0;
 
@@ -287,12 +330,59 @@ function bittrextStringParse(tickerData){
 
 }
 
+function calcKoreanPremium(){
+    let usdDash = parseFloat(_.find(bittrex_ticker, {'MarketName':'USDT-DASH'}).Last)
+    let krwDash = parseFloat(bithumb_ticker.DASH.last)
+
+    let usdBtc = parseFloat(_.find(bittrex_ticker, {'MarketName':'USDT-BTC'}).Last)
+    let usdEth = parseFloat(_.find(bittrex_ticker, {'MarketName':'USDT-ETH'}).Last)
+    let krwEth = parseFloat(bithumb_ticker.ETH.last)
+    let krwBtc = parseFloat(bithumb_ticker.BTC.last)
+
+    let usdKrwDash = usdDash * usd
+    let usdKrwEth = usdEth * usd
+    let usdKrwBtc = usdBtc * usd
+
+
+    let rate = krwDash / usdKrwDash * 100 - 100
+    let rateIcon, ethRateIcon, btcRateIcon;
+
+
+    let ethRate = krwEth / usdKrwEth * 100 - 100
+    let btcRate = krwBtc / usdKrwBtc * 100 - 100
+
+    if(rate > 0.0){
+        rateIcon = "👍"
+    } else {
+        rateIcon = "👎"
+    }
+
+    if(ethRate > 0.0){
+        ethRateIcon = "👍"
+    } else {
+        ethRateIcon = "👎"
+    }
+    if(btcRate > 0.0){
+        btcRateIcon = "👍"
+    } else {
+        btcRateIcon = "👎"
+    }
+    let m = "🇰🇷😈  Bittrex:Bithumb\r\n" +
+        "DASH :<b>" + rate.toFixed(4)  + "% </b>" +rateIcon+ "\r\n" +
+        "ETH  :<b>" + ethRate.toFixed(4) + "% </b>" +ethRateIcon+ "\r\n" +
+        "BTC  :<b>" + btcRate.toFixed(4) + "% </b>" + btcRateIcon
+
+    return m;
+}
 
 bot.onText(/\/start/, (msg) => {
 
     bot.sendMessage(msg.chat.id, "What can I do for you? Stay a while and listen.", {
         "reply_markup": {
-            "keyboard": [["USDT-ETH", "USDT-BTC"], ["ETH-BAT", "ETH-SNT","ETH-OMG"],   ["코빗","빗썸","김프"]]
+            "keyboard": [
+                ["CAP","USDT-ETH", "USDT-BTC"],
+                ["ETH-BAT", "ETH-SNT","ETH-OMG"],
+                ["코빗","빗썸","김프","POLONIEX"]]
         }
     });
 
@@ -314,6 +404,15 @@ bot.on('message', (msg) => {
         bot.sendMessage(chatId, m)
 
     }
+    else if(msg.text === "POLONIEX"){
+        let usdtEth = poloniex_ticker.USDT_ETH
+        let usdtBtc = poloniex_ticker.USDT_BTC
+
+        let m =
+            "Poloniex USDT-BTC: $" + parseFloat(usdtBtc.last).toFixed(4) + "\r\n" +
+            "Poloniex USDT-ETH: $" + parseFloat(usdtEth.last).toFixed(4) + "\r\n"
+
+    }
     else if(msg.text==='/bt' || msg.text==='/빗썸' || msg.text==='빗썸'){
         let m =
             "Bithumb KRW-BTC: ￦" + numberWithCommas(bithumb_ticker.BTC.last) + "\r\n" +
@@ -330,49 +429,17 @@ bot.on('message', (msg) => {
     else if(msg.text==="/김프" || msg.text==="김프"){
         // bot.sendMessage(chatId, "<b><i>김치가 좋아</i></b>", {parse_mode : "HTML"})
 
-        let usdDash = parseFloat(_.find(bittrex_ticker, {'MarketName':'USDT-DASH'}).Last)
-        let krwDash = parseFloat(bithumb_ticker.DASH.last)
+        bot.sendMessage(chatId, calcKoreanPremium(), {parse_mode : "HTML"})
+    }
+    else if(msg.text==="/cap" || msg.text==="CAP" || msg.text==="/CAP") {
+        let marketCap = numberWithCommas(global_market.total_market_cap_usd)
+        let bitPercentage = global_market.bitcoin_percentage_of_market_cap
 
-        let usdBtc = parseFloat(_.find(bittrex_ticker, {'MarketName':'USDT-BTC'}).Last)
-        let usdEth = parseFloat(_.find(bittrex_ticker, {'MarketName':'USDT-ETH'}).Last)
-        let krwEth = parseFloat(bithumb_ticker.ETH.last)
-        let krwBtc = parseFloat(bithumb_ticker.BTC.last)
+        let m = "Total Market Cap Usd: $" + marketCap + "\r\n" +
+            "BTC Dominance: " + bitPercentage + "%"
 
-        let usdKrwDash = usdDash * usd
-        let usdKrwEth = usdEth * usd
-        let usdKrwBtc = usdBtc * usd
+        bot.sendMessage(chatId, m)
 
-
-        let rate = krwDash / usdKrwDash * 100 - 100
-        let rateIcon, ethRateIcon, btcRateIcon;
-
-
-        let ethRate = krwEth / usdKrwEth * 100 - 100
-        let btcRate = krwBtc / usdKrwBtc * 100 - 100
-
-        if(rate > 0.0){
-            rateIcon = "👍"
-        } else {
-            rateIcon = "👎"
-        }
-
-        if(ethRate > 0.0){
-            ethRateIcon = "👍"
-        } else {
-            ethRateIcon = "👎"
-        }
-        if(btcRate > 0.0){
-            btcRateIcon = "👍"
-        } else {
-            btcRateIcon = "👎"
-        }
-        let m = "🇰🇷😈  Bittrex:Bithumb\r\n" +
-            "DASH :<b>" + rate.toFixed(4)  + "% </b>" +rateIcon+ "\r\n" +
-            "ETH  :<b>" + ethRate.toFixed(4) + "% </b>" +ethRateIcon+ "\r\n" +
-            "BTC  :<b>" + btcRate.toFixed(4) + "% </b>" + btcRateIcon
-
-
-        bot.sendMessage(chatId, m, {parse_mode : "HTML"})
     }
     else{
         if(_.find(bittrex_markets, {'MarketName':msg.text.replace('/','').toUpperCase()}) === undefined)
