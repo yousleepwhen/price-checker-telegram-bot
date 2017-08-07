@@ -407,7 +407,7 @@ bot.on('message', (msg) => {
     else if (msg.text ==="COINONE"){
 
     }
-    else if(msg.text === "POLONIEX" || msg.text === "/poloniex" || msg.text==="poloniex"){
+    else if(msg.text === "POLONIEX" || msg.text === "/poloniex" || msg.text==="POLO" || msg.text==="/polo" || msg.text==="poloniex"){
         let usdtEth = poloniex_ticker['USDT_ETH']
         let usdtBtc = poloniex_ticker['USDT_BTC']
 
