@@ -292,7 +292,7 @@ bot.onText(/\/start/, (msg) => {
 
     bot.sendMessage(msg.chat.id, "What can I do for you? Stay a while and listen.", {
         "reply_markup": {
-            "keyboard": [["USDT-ETH", "USDT-BTC", "ETH-BAT", "ETH-SNT","ETH-OMG"],   ["코빗","빗썸","김프"]]
+            "keyboard": [["USDT-ETH", "USDT-BTC"], ["ETH-BAT", "ETH-SNT","ETH-OMG"],   ["코빗","빗썸","김프"]]
         }
     });
 
