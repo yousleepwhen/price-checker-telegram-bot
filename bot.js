@@ -42,7 +42,6 @@ let korbit_ticker = {
     }
 }
 let poloniex_ticker = {
-
 }
 
 
@@ -107,8 +106,9 @@ setInterval(run_bittrex_markets, 60000)
 function run_poloniex_ticker() {
     request('https://poloniex.com/public?command=returnTicker', function (error, response, body) {
         if (!error && response.statusCode == 200) {
-            // console.log(JSON.parse(body))
-            poloniex_ticker = JSON.parse(body)
+            let data = JSON.parse(body)
+            poloniex_ticker = data
+            // console.log(poloniex_ticker)
 
         }
     })
@@ -382,7 +382,7 @@ bot.onText(/\/start/, (msg) => {
             "keyboard": [
                 ["CAP","USDT-ETH", "USDT-BTC"],
                 ["ETH-BAT", "ETH-SNT","ETH-OMG"],
-                ["코빗","빗썸","김프","POLONIEX"]]
+                ["코빗","빗썸","김프","POLO"]]
         }
     });
 
@@ -404,13 +404,21 @@ bot.on('message', (msg) => {
         bot.sendMessage(chatId, m)
 
     }
-    else if(msg.text === "POLONIEX"){
-        let usdtEth = poloniex_ticker.USDT_ETH
-        let usdtBtc = poloniex_ticker.USDT_BTC
+    else if (msg.text ==="COINONE"){
+
+    }
+    else if(msg.text === "POLONIEX" || msg.text === "/poloniex" || msg.text==="poloniex"){
+        let usdtEth = poloniex_ticker['USDT_ETH']
+        let usdtBtc = poloniex_ticker['USDT_BTC']
+
+        // console.log(usdtEth.last)
+        // console.log(usdtBtc.last)
 
         let m =
-            "Poloniex USDT-BTC: $" + parseFloat(usdtBtc.last).toFixed(4) + "\r\n" +
-            "Poloniex USDT-ETH: $" + parseFloat(usdtEth.last).toFixed(4) + "\r\n"
+            "Poloniex USDT-BTC: $" + parseFloat(usdtBtc['last']).toFixed(4) + "\r\n" +
+            "Poloniex USDT-ETH: $" + parseFloat(usdtEth['last']).toFixed(4) + "\r\n"
+
+        bot.sendMessage(chatId,m)
 
     }
     else if(msg.text==='/bt' || msg.text==='/빗썸' || msg.text==='빗썸'){
