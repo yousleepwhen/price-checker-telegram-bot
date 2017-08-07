@@ -286,11 +286,24 @@ function bittrextStringParse(tickerData){
     }
 
 }
+
+
+bot.onText(/\/start/, (msg) => {
+
+    bot.sendMessage(msg.chat.id, "What can I do for you? Stay a while and listen.", {
+        "reply_markup": {
+            "keyboard": [["USDT-ETH", "USDT-BTC", "ETH-BAT", "ETH-SNT","ETH-OMG"],   ["코빗","빗썸","김프"]]
+        }
+    });
+
+});
+
+
 bot.on('message', (msg) => {
     const chatId = msg.chat.id;
     console.log(msg)
 
-    if(msg.text==='/korbit'){
+    if(msg.text==='/korbit' || msg.text==='/코빗' || msg.text==='코빗'){
         let m =
             "Korbit KRW-BTC: ￦" + numberWithCommas(korbit_ticker.btc.last) + "\r\n" +
             "Korbit KRW-ETH: ￦" + numberWithCommas(korbit_ticker.eth.last) + "\r\n" +
@@ -301,7 +314,7 @@ bot.on('message', (msg) => {
         bot.sendMessage(chatId, m)
 
     }
-    else if(msg.text==='/bt'){
+    else if(msg.text==='/bt' || msg.text==='/빗썸' || msg.text==='빗썸'){
         let m =
             "Bithumb KRW-BTC: ￦" + numberWithCommas(bithumb_ticker.BTC.last) + "\r\n" +
             "Bithumb KRW-ETH: ￦" + numberWithCommas(bithumb_ticker.ETH.last) + "\r\n" +
@@ -314,7 +327,7 @@ bot.on('message', (msg) => {
 
 
     }
-    else if(msg.text==="/김프"){
+    else if(msg.text==="/김프" || msg.text==="김프"){
         // bot.sendMessage(chatId, "<b><i>김치가 좋아</i></b>", {parse_mode : "HTML"})
 
         let usdDash = parseFloat(_.find(bittrex_ticker, {'MarketName':'USDT-DASH'}).Last)
@@ -362,9 +375,16 @@ bot.on('message', (msg) => {
         bot.sendMessage(chatId, m, {parse_mode : "HTML"})
     }
     else{
+        if(_.find(bittrex_markets, {'MarketName':msg.text.replace('/','').toUpperCase()}) === undefined)
+            return;
 
         let photoUrl = _.find(bittrex_markets, {'MarketName':msg.text.replace('/','').toUpperCase()}).LogoUrl
-        bot.sendPhoto(chatId,photoUrl);
+
+        if(photoUrl!==null){
+            bot.sendPhoto(chatId,photoUrl);
+        }
+
+
         let returnMsg = bittrextStringParse(_.find(bittrex_ticker, {'MarketName':msg.text.replace('/','').toUpperCase()}))
         bot.sendMessage(chatId, returnMsg,{parse_mode : "HTML"})
     }
