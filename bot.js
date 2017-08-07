@@ -255,7 +255,7 @@ function bittrextStringParse(tickerData){
 
         let usdChangeText;
         // let usdChange = parseFloat(lastUSD / prevUSD).toFixed(4)
-        if(lastUSD / prevUSD < 0.0){
+        if(usdChange < 0.0){
             usdChangeText = "USD Change: <b>" +usdChange.toFixed(4)+ "%</b>😭😭😭\r\n"
         }else{
             usdChangeText = "USD Change: <b>" +usdChange.toFixed(4)+ "%</b>🤑🤑🤑\r\n"
