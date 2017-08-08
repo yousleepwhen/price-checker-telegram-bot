@@ -1,25 +1,107 @@
 
 const TelegramBot = require('node-telegram-bot-api');
-
+//
 if(!process.env.TELEGRAM_API_TOKEN){
     console.log("Telegram Bot Token Missing")
     process.exit(1)
 }
 
 const token = process.env.TELEGRAM_API_TOKEN
-// const token = '414024453:AAHQg3QrU-_WG77FHUyB9WIuTYKJXl_l10E'
+// const token = '414024453:AAHQg3QrU-_WG77FHUyB9WIuTYKJXl_l10E' //production
+// const token = '433274725:AAEb_5Mv6r23atBuYG42iib0Ma7011mx4e8' //dev
 
-// '414024453:AAHQg3QrU-_WG77FHUyB9WIuTYKJXl_l10E'
+
+// '433274725:AAEb_5Mv6r23atBuYG42iib0Ma7011mx4e8' //dev
+
+
+// '414024453:AAHQg3QrU-_WG77FHUyB9WIuTYKJXl_l10E' //production
 
 
 
 const _ = require('lodash')
 const request = require('request')
 
+//
+// let App = {
+//     alarmList: [],
+//     koreanPremium:{
+//         btc:0.0,
+//         eth:0.0
+//     },
+//     getAlarmList: () => this.alarmList
+// }
+//
+// let Alarm = {
+//     owner:"",
+//     setTime:""
+// }
 
-let App = {
+const Predicate = function(type, comparator ,value){
+    if(!(this instanceof Predicate)) return new Alarm(type, comparator, value)
+
+    this.type = type
+    this.comparator = comparator
+    this.value = value
+
+    this.check = function(){
+        if(this.type === "KrwPremium"){
+            calcKoreanPremium()
+            let lastEthRate = last_koreanPremium.eth
+            if(this.comparator === "Greater"){
+                if(this.value < lastEthRate)
+                    return true
+            }
+            else if (this.comparator === "Less"){
+                if(lastEthRate < this.value){
+                    return true
+                }
+            }
+            else if (this.comparator === "Equal"){
+                if(lastEthRate === this.value){
+                    return true
+                }
+            } else return false
+
+        } else if(this.type === "Market"){
+
+        }
+    }
+}
+
+const Alarm = function(owner, chatId, predicate, freq){
+    if(!(this instanceof Alarm)) return new Alarm(owner, chatId, predicate, freq)
+
+    this.owner = owner;
+    this.chatId = chatId;
+    this.predicate = predicate
+    this.freq = freq
+
+    this.pop = function(){
+        if(this.predicate.type === "KrwPremium"){
+            bot.sendMessage(this.chatId, "<b>ALARM KOREAN PREMIUM!!! by " +this.owner + "</b>\r\n" +
+                "🔥🔥🔥🔥🔥🔥🔥\r\n" + calcKoreanPremium() + "\r\n" +
+                "🔥🔥🔥🔥🔥🔥🔥", {parse_mode : "HTML"})
+
+        }
+    }
 
 }
+
+let alarms =[]
+
+// alarms.push(new Alarm("test", "test2"))
+
+
+setInterval(() => {
+    _.each(alarms, (alarm,idx) => {
+        // console.log(idx)
+        if(alarm.predicate.check()){
+            alarm.pop()
+            // console.log(alarm.predicate.check())
+            alarms.splice(idx,1)
+        }
+    })
+}, 10000)
 
 let global_market = {
 
@@ -55,8 +137,6 @@ let bithumb_ticker = {
 }
 let bittrex_markets = [];
 
-
-https://api.coinmarketcap.com/v1/global/
 
 
 function run_coinmarketcap_global_data() {
@@ -132,6 +212,7 @@ function getKWRUSDRate(){
                 // console.log(bittrex_ticker.result) // Print the google web page.
                 usd = parseFloat(data['query']['results']['rate']['Rate']);
                 console.log(usd);
+
             }
         })
 }
@@ -330,6 +411,17 @@ function bittrextStringParse(tickerData){
 
 }
 
+let last_koreanPremium = {
+    dash:{
+
+    },
+    eth:{
+
+    },
+    btc:{
+
+    }
+}
 function calcKoreanPremium(){
     let usdDash = parseFloat(_.find(bittrex_ticker, {'MarketName':'USDT-DASH'}).Last)
     let krwDash = parseFloat(bithumb_ticker.DASH.last)
@@ -367,6 +459,10 @@ function calcKoreanPremium(){
     } else {
         btcRateIcon = "👎"
     }
+    last_koreanPremium.eth = ethRate
+    last_koreanPremium.btc = btcRate
+    last_koreanPremium.dash = rate
+
     let m = "🇰🇷😈  Bittrex:Bithumb\r\n" +
         "DASH :<b>" + rate.toFixed(4)  + "% </b>" +rateIcon+ "\r\n" +
         "ETH  :<b>" + ethRate.toFixed(4) + "% </b>" +ethRateIcon+ "\r\n" +
@@ -385,15 +481,140 @@ bot.onText(/\/start/, (msg) => {
                 ["코빗","빗썸","김프","POLO"]]
         }
     });
-
 });
 
+bot.onText(/\alarm/,(msg) => {
+    bot.sendMessage(msg.chat.id, "What do you want?", {
+        "reply_markup": {
+            "keyboard": [
+                ["AlarmList"],
+                ["AddAlarm", "RemoveAlarm"],
+                ["Cancel"]]
+        }
+    });
+})
 
+let current_alarm_processing;
+let current_alarm_type;
+let current_alarm_comparator;
+let current_alarm_value;
+let current_alarm_freq;
+
+let percents = [15.0, 10.0, 5.0, 2.0, 1.0, 0.0 ,-1.0, -2.0, -5.0, -10.0, -15.0]
 bot.on('message', (msg) => {
     const chatId = msg.chat.id;
     console.log(msg)
 
-    if(msg.text==='/korbit' || msg.text==='/코빗' || msg.text==='코빗'){
+    // console.log()
+    // console.log(percents[_.findIndex(percents, 15.0)])
+
+
+    if(msg.text ==="Cancel"){
+        bot.sendMessage(msg.chat.id, "What can I do for you? Stay a while and listen.", {
+            "reply_markup": {
+                "keyboard": [
+                    ["CAP","USDT-ETH", "USDT-BTC"],
+                    ["ETH-BAT", "ETH-SNT","ETH-OMG"],
+                    ["코빗","빗썸","김프","POLO"]]
+            }
+        })
+        return
+    }
+    else if(msg.text === "Equal" || msg.text === "Greater" || msg.text === "Less"){
+        current_alarm_comparator = msg.text
+        bot.sendMessage(msg.chat.id, "Select % Value", {
+            "reply_markup": {
+                "keyboard": [
+                    ["15.0","10.0", "5.0", "2.0", "1.0"],
+                    ["-15.0", "-10.0", "-5.0", "-2.0", "-1.0"],
+                ["BackToAlarm", "Cancel"]]
+            }
+        })
+        return
+    }
+    else if (msg.text==="SaveAlarm"){
+        let predicate = new Predicate(current_alarm_type, current_alarm_comparator, current_alarm_value)
+        let alarm = new Alarm(msg.chat.first_name + msg.chat.last_name, chatId, predicate, 1)
+
+        alarms.push(alarm)
+        bot.sendMessage(chatId, 'Alarm Saved! Total Alarm Count:' + alarms.length)
+
+        bot.sendMessage(msg.chat.id, "What can I do for you? Stay a while and listen.", {
+            "reply_markup": {
+                "keyboard": [
+                    ["CAP","USDT-ETH", "USDT-BTC"],
+                    ["ETH-BAT", "ETH-SNT","ETH-OMG"],
+                    ["코빗","빗썸","김프","POLO"]]
+            }
+        })
+        return
+    }
+    else if(percents.find(x => x===parseFloat(msg.text)) !== undefined){
+
+        current_alarm_value = parseFloat(msg.text).toFixed(1)
+
+        bot.sendMessage(msg.chat.id, "Type:" +current_alarm_type +"\r\n Comparator:" + current_alarm_comparator+
+            "\r\n Value:"+ current_alarm_value + "\r\n Is that Okay?" , {
+            "reply_markup": {
+                "keyboard": [
+                    ["SaveAlarm"],
+                    ["BackToAlarm", "Cancel"]]
+            }
+        })
+        return
+        // console.log(msg.text +"aaa")
+    }
+    else if(msg.text === "KrwPremium") {
+        current_alarm_type = "KrwPremium"
+        bot.sendMessage(msg.chat.id, "Select Comparator", {
+            "reply_markup": {
+                "keyboard": [
+                    ["Equal","Greater", "Less"],
+                    ["BackToAlarm", "Cancel"]]
+            }
+        })
+        return
+
+        // bot.sendMessage(chatId, calcKoreanPremium(), {parse_mode : "HTML"})
+        // let alarm = new Alarm(msg.chat.first_name + msg.chat.last_name, chatId,5,5)
+        // alarms.push(alarm)
+        //
+        // bot.sendMessage(chatId, "alarm saved. total alarms:" + alarms.length)
+    }
+    else if(msg.text === "AlarmList"){
+        bot.sendMessage(chatId,"test")
+
+        console.log(alarms[0].owner)
+        bot.sendMessage(chatId, alarms[0]['owner'])
+        return
+    }
+    else if(msg.text === "AddAlarm"){
+        if(alarms.length > 2){
+            bot.sendMessage(chatId, "")
+        }
+        bot.sendMessage(msg.chat.id, "Which Type?.", {
+            "reply_markup": {
+                "keyboard": [
+                    ["KrwPremium"],
+                    ["Market"],
+                ["BackToAlarm","Cancel"]]
+            }
+        })
+        return
+    }
+    else if(msg.text ==="BackToAlarm") {
+        bot.sendMessage(msg.chat.id, "What do you want?", {
+            "reply_markup": {
+                "keyboard": [
+                    ["AlarmList"],
+                    ["AddAlarm", "RemoveAlarm"],
+                    ["Cancel"]]
+            }
+        });
+        return
+    }
+
+    else if(msg.text==='/korbit' || msg.text==='/코빗' || msg.text==='코빗'){
         let m =
             "Korbit KRW-BTC: ￦" + numberWithCommas(korbit_ticker.btc.last) + "\r\n" +
             "Korbit KRW-ETH: ￦" + numberWithCommas(korbit_ticker.eth.last) + "\r\n" +
