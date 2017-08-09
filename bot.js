@@ -494,9 +494,14 @@ function calcKoreanPremium(){
 
     let m = "KRW USD 환율: 1$ = "+ usd + "원\r\n" +
         "🇰🇷😈  Bittrex:Bithumb\r\n" +
-        "DASH :<b>" + rate.toFixed(4)  + "% </b>" +rateIcon+ "\r\n" +
-        "ETH  :<b> USD: $"+usdEth +"(₩"+ numberWithCommas(usdEth * usd) +") KRW: ₩"+ numberWithCommas(krwEth) +"  DIFF:" + ethRate.toFixed(4) + "% </b>" +ethRateIcon+ "\r\n" +
-        "BTC  :<b>" + btcRate.toFixed(4) + "% </b>" + btcRateIcon
+        "DASH:<b>" + rate.toFixed(4)  + "% </b>" +rateIcon+ "\r\n" +
+        "<=======================>" +
+        "ETH :<b>" +
+        "     USD : $"+usdEth +"(₩"+ numberWithCommas(usdEth * usd).fixed(4) +")" +
+        "     KRW : ₩"+ numberWithCommas(krwEth) +"" +
+        "     DIFF:" + ethRate.toFixed(4) + "% </b>" +ethRateIcon+ "\r\n" +
+        "<=======================>" +
+        "BTC :<b>" + btcRate.toFixed(4) + "% </b>" + btcRateIcon
 
     return m;
 }
@@ -544,7 +549,7 @@ bot.on('message', (msg) => {
     }
     else if (msg.text === "BITTREX"){
 
-        let market_array = _.map(bittrex_markets,'MarketName').chunk_inefficient(5)
+        let market_array = _.map(bittrex_markets,'MarketName').chunk_inefficient(3)
         market_array.push(['Cancel'])
         console.log(market_array)
         bot.sendMessage(msg.chat.id, "Whice one?", {
