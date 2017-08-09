@@ -20,7 +20,7 @@ function getKeySymbol(marketName, separator){
 }
 
 //
-// const token = process.env.TELEGRAM_API_TOKEN
+const token = process.env.TELEGRAM_API_TOKEN
 // const token = '414024453:AAHQg3QrU-_WG77FHUyB9WIuTYKJXl_l10E' //production
 // const token = '433274725:AAEb_5Mv6r23atBuYG42iib0Ma7011mx4e8' //dev
 
