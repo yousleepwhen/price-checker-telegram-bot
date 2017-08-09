@@ -3,7 +3,7 @@ const _ = require('lodash')
 const request = require('request')
 
 const TelegramBot = require('node-telegram-bot-api');
-//
+
 if(!process.env.TELEGRAM_API_TOKEN){
     console.log("Telegram Bot Token Missing")
     process.exit(1)
