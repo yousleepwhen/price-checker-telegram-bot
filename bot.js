@@ -495,12 +495,12 @@ function calcKoreanPremium(){
     let m = "KRW USD 환율: 1$ = "+ usd + "원\r\n" +
         "🇰🇷😈  Bittrex:Bithumb\r\n" +
         "DASH:<b>" + rate.toFixed(4)  + "% </b>" +rateIcon+ "\r\n" +
-        "<=======================>" +
-        "ETH :<b>" +
-        "     USD : $"+usdEth +"(₩"+ numberWithCommas(usdEth * usd).fixed(4) +")" +
-        "     KRW : ₩"+ numberWithCommas(krwEth) +"" +
-        "     DIFF:" + ethRate.toFixed(4) + "% </b>" +ethRateIcon+ "\r\n" +
-        "<=======================>" +
+
+        "ETH :<b>\r\n" +
+        "     USD : $"+ usdEth +"(₩"+ numberWithCommas((usdEth * usd).toFixed(4)) +")\r\n" +
+        "     KRW : ₩"+ numberWithCommas(krwEth) +"\r\n" +
+        "     DIFF :" + ethRate.toFixed(4) + "% </b>" +ethRateIcon+ "\r\n" +
+
         "BTC :<b>" + btcRate.toFixed(4) + "% </b>" + btcRateIcon
 
     return m;
