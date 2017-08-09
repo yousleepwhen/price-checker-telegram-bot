@@ -9,5 +9,6 @@ RUN npm install
 
 ENV TELEGRAM_API_TOKEN=$TELEGRAM_API_TOKEN
 COPY ./bot.js /usr/src/app/bot.js
+COPY ./util /usr/src/app
 EXPOSE 5000
 CMD ["npm", "run", "start"]
