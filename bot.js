@@ -369,7 +369,7 @@ function bittrextStringParse(tickerData){
     if(tickerData !== undefined){
         let marketTitle = tickerData.MarketName
 
-        let change = parseFloat((tickerData.Last / tickerData.PrevDay * 100.0) - 100.0).toFixed(4)
+        let change = parseFloat((tickerData.Last / tickerData.PrevDay * 100.0) - 100.0).toFixed(2)
 
         let key = getKeySymbol(marketTitle,"-")
 
@@ -407,20 +407,20 @@ function bittrextStringParse(tickerData){
         let usdChangeText;
         // let usdChange = parseFloat(lastUSD / prevUSD).toFixed(4)
         if(usdChange < 0.0){
-            usdChangeText = "USD Change: <b>" +usdChange.toFixed(4)+ "%</b>" +getHowManyEmoji("😭", usdChange.toFixed(4)) +"\r\n"
+            usdChangeText = "USD Change: <b>" +usdChange.toFixed(2)+ "%</b>" +getHowManyEmoji("😭", usdChange.toFixed(2)) +"\r\n"
         }else{
-            usdChangeText = "USD Change: <b>" +usdChange.toFixed(4)+ "%</b>"+getHowManyEmoji("🤑", usdChange.toFixed(4))+"\r\n"
+            usdChangeText = "USD Change: <b>" +usdChange.toFixed(2)+ "%</b>"+getHowManyEmoji("🤑", usdChange.toFixed(2))+"\r\n"
         }
 
 
         let msg = "" +
             "최근 BTC: 💲<b>" + numberWithCommas(current_usdt_btc) + "</b>\r\n" +
             "어제 BTC: 💲<b>" + numberWithCommas(prev_usdt_btc) + "</b>\r\n" +
-            "BTC USD Change: " + (current_usdt_btc / prev_usdt_btc * 100 - 100).toFixed(4) + "%\r\n" +
+            "BTC USD Change: " + (current_usdt_btc / prev_usdt_btc * 100 - 100).toFixed(2) + "%\r\n" +
             "\r\n" +
             "최근 ETH: 💲<b>" + numberWithCommas(current_usdt_eth) + "</b>\r\n" +
             "어제 ETH: 💲<b>" + numberWithCommas(prev_usdt_eth) + "</b>\r\n" +
-            "ETH USD Change: " + (current_usdt_eth / prev_usdt_eth * 100 - 100).toFixed(4) + "%\r\n"+
+            "ETH USD Change: " + (current_usdt_eth / prev_usdt_eth * 100 - 100).toFixed(2) + "%\r\n"+
 
             "=============\r\n" +
             "Market: <b>" +tickerData.MarketName + "</b>\r\n" +
@@ -428,7 +428,7 @@ function bittrextStringParse(tickerData){
             "어제: <b>" + parseFloat(tickerData.PrevDay).toFixed(8) +` ${key}`+ prevUSD +"</b>\r\n" +
             changeText  +"" +
             usdChangeText + "" +
-            "Volume: " + tickerData.Volume + "\r\n" +
+            "Volume: " + parseFloat(tickerData.Volume).toFixed(2) + "\r\n" +
             "OpenBuyOrders: "+ tickerData.OpenBuyOrders +"\r\n" +
             "OpenSellOrders: "+ tickerData.OpenSellOrders +"\r\n" +
             "=============\r\n"
@@ -549,9 +549,12 @@ bot.on('message', (msg) => {
     }
     else if (msg.text === "BITTREX"){
 
-        let market_array = _.map(bittrex_markets,'MarketName').chunk_inefficient(3)
+        let arr = _.sortBy(bittrex_ticker,(market) => parseFloat(market.Last))
+        // console.log()
+        // console.log(_.map(_.sortBy(bittrex_ticker,(market) => parseFloat(market.Last)),'MarketName'))
+        let market_array = _.map(_(arr).reverse().value(),'MarketName').chunk_inefficient(3)
         market_array.push(['Cancel'])
-        console.log(market_array)
+        // console.log(market_array)
         bot.sendMessage(msg.chat.id, "Whice one?", {
             "reply_markup": {
                 "keyboard":market_array
