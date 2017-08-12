@@ -1,28 +1,17 @@
-// const commonUtil = require('./util/common.js')
+const commonUtil = require('./util/common.js')
 const _ = require('lodash')
 const request = require('request')
 
 const TelegramBot = require('node-telegram-bot-api');
 //
-if(!process.env.TELEGRAM_API_TOKEN){
-    console.log("Telegram Bot Token Missing")
-    process.exit(1)
-}
-
-
-function numberWithCommas(x){
-    return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-}
-
-function getKeySymbol(marketName, separator){
-    let keys = marketName.split(separator)
-    return keys[0]
-}
-
+// if(!process.env.TELEGRAM_API_TOKEN){
+//     console.log("Telegram Bot Token Missing")
+//     process.exit(1)
+// }
 //
-const token = process.env.TELEGRAM_API_TOKEN
+// const token = process.env.TELEGRAM_API_TOKEN
 // const token = '414024453:AAHQg3QrU-_WG77FHUyB9WIuTYKJXl_l10E' //production
-// const token = '433274725:AAEb_5Mv6r23atBuYG42iib0Ma7011mx4e8' //dev
+const token = '433274725:AAEb_5Mv6r23atBuYG42iib0Ma7011mx4e8' //dev
 
 
 Object.defineProperty(Array.prototype, 'chunk_inefficient', {
@@ -35,29 +24,6 @@ Object.defineProperty(Array.prototype, 'chunk_inefficient', {
         );
     }
 });
-
-
-
-// '433274725:AAEb_5Mv6r23atBuYG42iib0Ma7011mx4e8' //dev
-// '414024453:AAHQg3QrU-_WG77FHUyB9WIuTYKJXl_l10E' //production
-
-
-
-
-//
-// let App = {
-//     alarmList: [],
-//     koreanPremium:{
-//         btc:0.0,
-//         eth:0.0
-//     },
-//     getAlarmList: () => this.alarmList
-// }
-//
-// let Alarm = {
-//     owner:"",
-//     setTime:""
-// }
 
 const Predicate = function(type, comparator ,value){
     if(!(this instanceof Predicate)) return new Alarm(type, comparator, value)
@@ -365,13 +331,12 @@ function getHowManyEmoji(e, v){
 }
 
 function bittrextStringParse(tickerData){
-    // console.log(tickerData)
     if(tickerData !== undefined){
         let marketTitle = tickerData.MarketName
 
         let change = parseFloat((tickerData.Last / tickerData.PrevDay * 100.0) - 100.0).toFixed(2)
 
-        let key = getKeySymbol(marketTitle,"-")
+        let key = commonUtil.getKeySymbol(marketTitle,"-")
 
         let lastUSD;
         let prevUSD;
@@ -414,12 +379,12 @@ function bittrextStringParse(tickerData){
 
 
         let msg = "" +
-            "최근 BTC: 💲<b>" + numberWithCommas(current_usdt_btc) + "</b>\r\n" +
-            "어제 BTC: 💲<b>" + numberWithCommas(prev_usdt_btc) + "</b>\r\n" +
+            "최근 BTC: 💲<b>" + commonUtil.numberWithCommas(current_usdt_btc) + "</b>\r\n" +
+            "어제 BTC: 💲<b>" + commonUtil.numberWithCommas(prev_usdt_btc) + "</b>\r\n" +
             "BTC USD Change: " + (current_usdt_btc / prev_usdt_btc * 100 - 100).toFixed(2) + "%\r\n" +
             "\r\n" +
-            "최근 ETH: 💲<b>" + numberWithCommas(current_usdt_eth) + "</b>\r\n" +
-            "어제 ETH: 💲<b>" + numberWithCommas(prev_usdt_eth) + "</b>\r\n" +
+            "최근 ETH: 💲<b>" + commonUtil.numberWithCommas(current_usdt_eth) + "</b>\r\n" +
+            "어제 ETH: 💲<b>" + commonUtil.numberWithCommas(prev_usdt_eth) + "</b>\r\n" +
             "ETH USD Change: " + (current_usdt_eth / prev_usdt_eth * 100 - 100).toFixed(2) + "%\r\n"+
 
             "=============\r\n" +
@@ -497,8 +462,8 @@ function calcKoreanPremium(){
         "DASH:<b>" + rate.toFixed(4)  + "% </b>" +rateIcon+ "\r\n" +
 
         "ETH :<b>\r\n" +
-        "     USD : $"+ usdEth +"(₩"+ numberWithCommas((usdEth * usd).toFixed(4)) +")\r\n" +
-        "     KRW : ₩"+ numberWithCommas(krwEth) +"\r\n" +
+        "     USD : $"+ usdEth +"(₩"+ commonUtil.numberWithCommas((usdEth * usd).toFixed(4)) +")\r\n" +
+        "     KRW : ₩"+ commonUtil.numberWithCommas(krwEth) +"\r\n" +
         "     DIFF :" + ethRate.toFixed(4) + "% </b>" +ethRateIcon+ "\r\n" +
 
         "BTC :<b>" + btcRate.toFixed(4) + "% </b>" + btcRateIcon
@@ -559,10 +524,9 @@ bot.on('message', (msg) => {
             "reply_markup": {
                 "keyboard":market_array
 
-
             }
         })
-
+        return
     }
     else if(msg.text === "Equal" || msg.text === "Greater" || msg.text === "Less"){
         current_alarm_comparator = msg.text
@@ -585,7 +549,6 @@ bot.on('message', (msg) => {
         bot.sendMessage(chatId, 'Alarm Saved! Total Alarm Count:' + alarms.length)
 
         defaultKeyboard(msg.chat.id)
-
         return
     }
     else if(percents.find(x => x===parseFloat(msg.text)) !== undefined){
@@ -600,8 +563,6 @@ bot.on('message', (msg) => {
                     ["BackToAlarm", "Cancel"]]
             }
         })
-        return
-        // console.log(msg.text +"aaa")
     }
     else if(msg.text === "KrwPremium") {
         current_alarm_type = "KrwPremium"
@@ -612,14 +573,12 @@ bot.on('message', (msg) => {
                     ["BackToAlarm", "Cancel"]]
             }
         })
-        return
     }
     else if(msg.text === "AlarmList"){
         bot.sendMessage(chatId,"test")
 
         console.log(alarms[0].owner)
         bot.sendMessage(chatId, alarms[0]['owner'])
-        return
     }
     else if(msg.text === "AddAlarm"){
         if(alarms.length > 2){
@@ -633,7 +592,6 @@ bot.on('message', (msg) => {
                 ["BackToAlarm","Cancel"]]
             }
         })
-        return
     }
     else if(msg.text ==="BackToAlarm") {
         bot.sendMessage(msg.chat.id, "What do you want?", {
@@ -644,16 +602,15 @@ bot.on('message', (msg) => {
                     ["Cancel"]]
             }
         });
-        return
     }
 
     else if(msg.text==='/korbit' || msg.text==='/코빗' || msg.text==='코빗'){
         let m =
-            "Korbit KRW-BTC: ￦" + numberWithCommas(korbit_ticker.btc.last) + "\r\n" +
-            "Korbit KRW-ETH: ￦" + numberWithCommas(korbit_ticker.eth.last) + "\r\n" +
-            "Korbit KRW-ETC: ￦" + numberWithCommas(korbit_ticker.etc.last) + "\r\n" +
-            "Korbit KRW-XRP: ￦" + numberWithCommas(korbit_ticker.xrp.last) + "\r\n" +
-            "Korbit KRW-BCH: ￦" + numberWithCommas(korbit_ticker.bch.last) + "\r\n"
+            "Korbit KRW-BTC: ￦" + commonUtil.numberWithCommas(korbit_ticker.btc.last) + "\r\n" +
+            "Korbit KRW-ETH: ￦" + commonUtil.numberWithCommas(korbit_ticker.eth.last) + "\r\n" +
+            "Korbit KRW-ETC: ￦" + commonUtil.numberWithCommas(korbit_ticker.etc.last) + "\r\n" +
+            "Korbit KRW-XRP: ￦" + commonUtil.numberWithCommas(korbit_ticker.xrp.last) + "\r\n" +
+            "Korbit KRW-BCH: ￦" + commonUtil.numberWithCommas(korbit_ticker.bch.last) + "\r\n"
 
         bot.sendMessage(chatId, m)
 
@@ -677,12 +634,12 @@ bot.on('message', (msg) => {
     }
     else if(msg.text==='/bt' || msg.text==='/빗썸' || msg.text==='빗썸'){
         let m =
-            "Bithumb KRW-BTC: ￦" + numberWithCommas(bithumb_ticker.BTC.last) + "\r\n" +
-            "Bithumb KRW-ETH: ￦" + numberWithCommas(bithumb_ticker.ETH.last) + "\r\n" +
-            "Bithumb KRW-ETC: ￦" + numberWithCommas(bithumb_ticker.ETC.last) + "\r\n" +
-            "Bithumb KRW-XRP: ￦" + numberWithCommas(bithumb_ticker.XRP.last) + "\r\n" +
-            "Bithumb KRW-DASH: ￦" + numberWithCommas(bithumb_ticker.DASH.last) + "\r\n" +
-            "Bithumb KRW-BCH: ￦" + numberWithCommas(bithumb_ticker.BCH.last) + "\r\n"
+            "Bithumb KRW-BTC: ￦" + commonUtil.numberWithCommas(bithumb_ticker.BTC.last) + "\r\n" +
+            "Bithumb KRW-ETH: ￦" + commonUtil.numberWithCommas(bithumb_ticker.ETH.last) + "\r\n" +
+            "Bithumb KRW-ETC: ￦" + commonUtil.numberWithCommas(bithumb_ticker.ETC.last) + "\r\n" +
+            "Bithumb KRW-XRP: ￦" + commonUtil.numberWithCommas(bithumb_ticker.XRP.last) + "\r\n" +
+            "Bithumb KRW-DASH: ￦" + commonUtil.numberWithCommas(bithumb_ticker.DASH.last) + "\r\n" +
+            "Bithumb KRW-BCH: ￦" + commonUtil.numberWithCommas(bithumb_ticker.BCH.last) + "\r\n"
 
         bot.sendMessage(chatId, m)
 
@@ -694,7 +651,7 @@ bot.on('message', (msg) => {
         bot.sendMessage(chatId, calcKoreanPremium(), {parse_mode : "HTML"})
     }
     else if(msg.text==="/cap" || msg.text==="CAP" || msg.text==="/CAP") {
-        let marketCap = numberWithCommas(global_market.total_market_cap_usd)
+        let marketCap = commonUtil.numberWithCommas(global_market.total_market_cap_usd)
         let bitPercentage = global_market.bitcoin_percentage_of_market_cap
 
         let m = "Total Market Cap Usd: $" + marketCap + "\r\n" +
@@ -720,7 +677,5 @@ bot.on('message', (msg) => {
         defaultKeyboard(msg.chat.id)
 
     }
-
-
 
 });
