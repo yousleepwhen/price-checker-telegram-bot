@@ -27,6 +27,64 @@ Object.defineProperty(Array.prototype, 'chunk_inefficient', {
     }
 });
 
+const PriceChecker = function(telegram_bot) {
+    if(!(this instanceof PriceChecker)) return new PriceChecker(telegram_bot)
+    this.telegram_bot = telegram_bot
+}
+
+const Market = function(standard, name){
+    if(!(this instanceof Market)) return new Market(standard, name)
+    this.standard = standard
+    this.name = name
+}
+
+const Bittrex = function() {
+    if(!(this instanceof Bittrex)) return new Bittrex()
+
+    let market_summary
+    let market_info
+
+    let timer
+
+    this.get_bittrex_market_summary = function(){
+        request('https://bittrex.com/api/v1.1/public/getmarketsummaries', function (error, response, body) {
+            if (!error && response.statusCode == 200) {
+                market_summary = JSON.parse(body).result
+                // current_usdt_btc = _.find(bittrex_ticker, {'MarketName':'USDT-BTC'}).Last
+                // current_usdt_eth = _.find(bittrex_ticker, {'MarketName':'USDT-ETH'}).Last
+                // prev_usdt_btc = _.find(bittrex_ticker, {'MarketName':'USDT-BTC'}).PrevDay
+                // prev_usdt_eth = _.find(bittrex_ticker, {'MarketName':'USDT-ETH'}).PrevDay
+            }
+        })
+    }
+    this.get_bittrex_market_info = function(){
+        request('https://bittrex.com/api/v1.1/public/getmarkets', function (error, response, body) {
+            if (!error && response.statusCode == 200) {
+                market_info = JSON.parse(body).result
+            }
+        })
+    }
+    this.run = function(interval){
+        if(timer !== undefined){
+            console.log("Stop first")
+            return
+        }
+        this.get_bittrex_market_summary()
+        this.get_bittrex_market_info()
+        timer = setInterval(() => {
+            this.get_bittrex_market_summary()
+            this.get_bittrex_market_info()
+        },interval)
+    }
+    this.stop = function(){
+        clearInterval(timer)
+        timer = null
+    }
+    this.getMarketSummary = () => market_summary
+    this.getMarkets = () => market_info
+}
+const bittrex = new Bittrex()
+bittrex.run(5000)
 
 const CoinMarketCap = function(){
     if(!(this instanceof CoinMarketCap)) return new CoinMarketCap()
@@ -59,7 +117,7 @@ const CoinMarketCap = function(){
 
 const coinMarketCap = new CoinMarketCap()
 coinMarketCap.run(5000)
-// setInterval(() => console.log(coinMarketCap.getSummary()), 5000)
+
 
 const Predicate = function(type, comparator ,value){
     if(!(this instanceof Predicate)) return new Alarm(type, comparator, value)
@@ -111,9 +169,6 @@ const Alarm = function(owner, chatId, predicate, freq){
     }
 }
 
-const Exchange = function(name, markets, apis){
-    if(!(this instanceof Exchange)) return new Exchange(name, markets, apis)
-}
 let alarms =[]
 
 setInterval(() => {
@@ -124,10 +179,6 @@ setInterval(() => {
         }
     })
 }, 10000)
-
-let bittrex_ticker = {
-
-}
 
 let korbit_ticker = {
     btc:{
@@ -155,39 +206,6 @@ let bithumb_ticker = {
 
 }
 let bittrex_markets = [];
-
-
-
-
-function run_bittrex_ticker() {
-    request('https://bittrex.com/api/v1.1/public/getmarketsummaries', function (error, response, body) {
-        if (!error && response.statusCode == 200) {
-            // console.log(JSON.parse(body))
-            bittrex_ticker = JSON.parse(body).result
-            current_usdt_btc = _.find(bittrex_ticker, {'MarketName':'USDT-BTC'}).Last
-            current_usdt_eth = _.find(bittrex_ticker, {'MarketName':'USDT-ETH'}).Last
-            prev_usdt_btc = _.find(bittrex_ticker, {'MarketName':'USDT-BTC'}).PrevDay
-            prev_usdt_eth = _.find(bittrex_ticker, {'MarketName':'USDT-ETH'}).PrevDay
-
-        }
-    })
-}
-
-function run_bittrex_markets() {
-    request('https://bittrex.com/api/v1.1/public/getmarkets', function (error, response, body) {
-        if (!error && response.statusCode == 200) {
-            // console.log(JSON.parse(body))
-            bittrex_markets = JSON.parse(body).result
-
-
-        }
-    })
-}
-
-run_bittrex_markets()
-run_bittrex_ticker()
-setInterval(run_bittrex_ticker, 5000)
-setInterval(run_bittrex_markets, 60000)
 
 
 
@@ -326,10 +344,10 @@ bot.onText(/\/echo (.+)/, (msg, match) => {
 });
 
 function getHowManyEmoji(e, v){
-    if(Math.abs(v) > 0 && 9.999 > Math.abs(v) ){
+    if(Math.abs(v) >= 0 && 9.999 > Math.abs(v) ){
         return e
     }
-    if(Math.abs(v) > 10 && 19.999 > Math.abs(v)){
+    if(Math.abs(v) >= 10 && 19.999 > Math.abs(v)){
         return e + e
     }
     if(Math.abs(v > 20))
@@ -340,7 +358,7 @@ function bittrextStringParse(tickerData){
     if(tickerData !== undefined){
         let marketTitle = tickerData.MarketName
 
-        let change = parseFloat((tickerData.Last / tickerData.PrevDay * 100.0) - 100.0).toFixed(2)
+        let change = commonUtil.getChange(tickerData.Last, tickerData.PrevDay, 2)
 
         let key = commonUtil.getKeySymbol(marketTitle,"-")
 
@@ -383,15 +401,18 @@ function bittrextStringParse(tickerData){
             usdChangeText = "USD Change: <b>" +usdChange.toFixed(2)+ "%</b>"+getHowManyEmoji("🤑", usdChange.toFixed(2))+"\r\n"
         }
 
+        let usdt_btc_market = _.find(bittrex.getMarketSummary(),{'MarketName':'USDT-BTC'})
+        let usdt_eth_market = _.find(bittrex.getMarketSummary(),{'MarketName':'USDT-ETH'})
+
 
         let msg = "" +
-            "최근 BTC: 💲<b>" + commonUtil.numberWithCommas(current_usdt_btc) + "</b>\r\n" +
-            "어제 BTC: 💲<b>" + commonUtil.numberWithCommas(prev_usdt_btc) + "</b>\r\n" +
-            "BTC USD Change: " + (current_usdt_btc / prev_usdt_btc * 100 - 100).toFixed(2) + "%\r\n" +
+            "최근 BTC: 💲<b>" + commonUtil.numberWithCommas(usdt_btc_market.Last) + "</b>\r\n" +
+            "어제 BTC: 💲<b>" + commonUtil.numberWithCommas(usdt_btc_market.PrevDay) + "</b>\r\n" +
+            "BTC USD Change: " + commonUtil.getChange(usdt_btc_market.Last, usdt_btc_market.PrevDay, 2) + "%\r\n" +
             "\r\n" +
-            "최근 ETH: 💲<b>" + commonUtil.numberWithCommas(current_usdt_eth) + "</b>\r\n" +
-            "어제 ETH: 💲<b>" + commonUtil.numberWithCommas(prev_usdt_eth) + "</b>\r\n" +
-            "ETH USD Change: " + (current_usdt_eth / prev_usdt_eth * 100 - 100).toFixed(2) + "%\r\n"+
+            "최근 ETH: 💲<b>" + commonUtil.numberWithCommas(usdt_eth_market.Last) + "</b>\r\n" +
+            "어제 ETH: 💲<b>" + commonUtil.numberWithCommas(usdt_eth_market.PrevDay) + "</b>\r\n" +
+            "ETH USD Change: " + commonUtil.getChange(usdt_eth_market.Last, usdt_eth_market.PrevDay, 2) + "%\r\n"+
 
             "=============\r\n" +
             "Market: <b>" +tickerData.MarketName + "</b>\r\n" +
@@ -423,11 +444,12 @@ let last_koreanPremium = {
     }
 }
 function calcKoreanPremium(){
-    let usdDash = parseFloat(_.find(bittrex_ticker, {'MarketName':'USDT-DASH'}).Last)
+    let bittrex_market_summary = bittrex.getMarketSummary()
+    let usdDash = parseFloat(_.find(bittrex_market_summary, {'MarketName':'USDT-DASH'}).Last)
     let krwDash = parseFloat(bithumb_ticker.DASH.last)
 
-    let usdBtc = parseFloat(_.find(bittrex_ticker, {'MarketName':'USDT-BTC'}).Last)
-    let usdEth = parseFloat(_.find(bittrex_ticker, {'MarketName':'USDT-ETH'}).Last)
+    let usdBtc = parseFloat(_.find(bittrex_market_summary, {'MarketName':'USDT-BTC'}).Last)
+    let usdEth = parseFloat(_.find(bittrex_market_summary, {'MarketName':'USDT-ETH'}).Last)
     let krwEth = parseFloat(bithumb_ticker.ETH.last)
     let krwBtc = parseFloat(bithumb_ticker.BTC.last)
 
@@ -533,7 +555,7 @@ bot.on('message', (msg) => {
             return
         }
         case 'BITTREX': {
-            let arr = _.sortBy(bittrex_ticker,(market) => parseFloat(market.Last))
+            let arr = _.sortBy(bittrex.getMarketSummary(),(market) => parseFloat(market.Last))
             let market_array = _.map(_(arr).reverse().value(),'MarketName').chunk_inefficient(3)
             market_array.push(['Cancel'])
             bot.sendMessage(msg.chat.id, "Whice one?", {
@@ -639,8 +661,9 @@ bot.on('message', (msg) => {
                 "Poloniex USDT-ETH: $" + parseFloat(usdtEth['last']).toFixed(4) + "\r\n"
 
             bot.sendMessage(chatId,m)
+            return
         }
-        case '빗썸':{
+        case '빗썸': {
             let m =
                 "Bithumb KRW-BTC: ￦" + commonUtil.numberWithCommas(bithumb_ticker.BTC.last) + "\r\n" +
                 "Bithumb KRW-ETH: ￦" + commonUtil.numberWithCommas(bithumb_ticker.ETH.last) + "\r\n" +
@@ -667,17 +690,17 @@ bot.on('message', (msg) => {
             return
         }
         default :{
-            if(_.find(bittrex_markets, {'MarketName':msg.text.replace('/','').toUpperCase()}) === undefined)
+            if(_.find(bittrex.getMarkets(), {'MarketName':msg.text.replace('/','').toUpperCase()}) === undefined)
                 return;
 
-            let photoUrl = _.find(bittrex_markets, {'MarketName':msg.text.replace('/','').toUpperCase()}).LogoUrl
+            let photoUrl = _.find(bittrex.getMarkets(), {'MarketName':msg.text.replace('/','').toUpperCase()}).LogoUrl
 
             if(photoUrl!==null){
                 bot.sendPhoto(chatId,photoUrl);
             }
 
 
-            let returnMsg = bittrextStringParse(_.find(bittrex_ticker, {'MarketName':msg.text.replace('/','').toUpperCase()}))
+            let returnMsg = bittrextStringParse(_.find(bittrex.getMarketSummary(), {'MarketName':msg.text.replace('/','').toUpperCase()}))
             bot.sendMessage(chatId, returnMsg,{parse_mode : "HTML"})
 
             defaultKeyboard(msg.chat.id)
