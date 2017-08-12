@@ -6,6 +6,7 @@ const TelegramBot = require('node-telegram-bot-api');
 const appConfig = require('./config/config.json')
 
 const Bittrex = require('./exchange/bittrex').Bittrex
+const Korbit = require('./exchange/korbit').Korbit
 
 // const coinMarketCap = require('./exchange/coinmarketcap').coinMarketCap
 // if(!process.env.TELEGRAM_BOT_TOKEN){
@@ -41,6 +42,9 @@ const Market = function(standard, name){
 
 const bittrex = new Bittrex()
 bittrex.run(5000)
+
+const korbit = new Korbit()
+korbit.run(5000)
 
 const CoinMarketCap = function(){
     if(!(this instanceof CoinMarketCap)) return new CoinMarketCap()
@@ -136,19 +140,7 @@ setInterval(() => {
     })
 }, 10000)
 
-let korbit_ticker = {
-    btc:{
-    },
-    eth:{
-    },
-    etc:{
-    },
-    xrp:{
 
-    },
-    bch:{
-    }
-}
 let poloniex_ticker = {
 }
 
@@ -206,65 +198,6 @@ setInterval(getKWRUSDRate, 5000)
 const bot = new TelegramBot(token, {polling: true});
 
 
-function korbit_ticker_xrp() {
-    request('https://api.korbit.co.kr/v1/ticker?currency_pair=xrp_krw', function (error, response, body) {
-        if (!error && response.statusCode == 200) {
-            // console.log(body) // Print the google web page.
-            korbit_ticker.xrp = JSON.parse(body)
-        }
-    })
-}
-
-
-function korbit_ticker_btc() {
-    request('https://api.korbit.co.kr/v1/ticker?currency_pair=btc_krw', function (error, response, body) {
-        if (!error && response.statusCode == 200) {
-            // console.log(body) // Print the google web page.
-            korbit_ticker.btc = JSON.parse(body)
-        }
-    })
-}
-
-function korbit_ticker_eth() {
-    request('https://api.korbit.co.kr/v1/ticker?currency_pair=eth_krw', function (error, response, body) {
-        if (!error && response.statusCode == 200) {
-            // console.log(body) // Print the google web page.
-            korbit_ticker.eth = JSON.parse(body)
-
-        }
-    })
-}
-
-function korbit_ticker_etc() {
-    request('https://api.korbit.co.kr/v1/ticker?currency_pair=etc_krw', function (error, response, body) {
-        if (!error && response.statusCode == 200) {
-            // console.log(body) // Print the google web page.
-            korbit_ticker.etc = JSON.parse(body)
-
-        }
-    })
-}
-
-function korbit_ticker_bch() {
-    request('https://api.korbit.co.kr/v1/ticker?currency_pair=bcc_krw', function (error, response, body) {
-        if (!error && response.statusCode == 200) {
-            // console.log(body) // Print the google web page.
-            korbit_ticker.bch = JSON.parse(body)
-
-        }
-    })
-}
-
-function run_korbit_ticker(){
-    korbit_ticker_btc()
-    korbit_ticker_etc()
-    korbit_ticker_eth()
-    korbit_ticker_xrp()
-    korbit_ticker_bch()
-}
-
-run_korbit_ticker()
-setInterval(run_korbit_ticker, 10000)
 
 
 
@@ -591,12 +524,14 @@ bot.on('message', (msg) => {
         case '/korbit':
         case '/코빗':
         case '코빗': {
+            let market_summary = korbit.getMarketSummary()
+            console.log(market_summary)
             let m =
-                "Korbit KRW-BTC: ￦" + commonUtil.numberWithCommas(korbit_ticker.btc.last) + "\r\n" +
-                "Korbit KRW-ETH: ￦" + commonUtil.numberWithCommas(korbit_ticker.eth.last) + "\r\n" +
-                "Korbit KRW-ETC: ￦" + commonUtil.numberWithCommas(korbit_ticker.etc.last) + "\r\n" +
-                "Korbit KRW-XRP: ￦" + commonUtil.numberWithCommas(korbit_ticker.xrp.last) + "\r\n" +
-                "Korbit KRW-BCH: ￦" + commonUtil.numberWithCommas(korbit_ticker.bch.last) + "\r\n"
+                "Korbit KRW-BTC: ￦" + commonUtil.numberWithCommas(market_summary.btc.last) + "\r\n" +
+                "Korbit KRW-ETH: ￦" + commonUtil.numberWithCommas(market_summary.eth.last) + "\r\n" +
+                "Korbit KRW-ETC: ￦" + commonUtil.numberWithCommas(market_summary.etc.last) + "\r\n" +
+                "Korbit KRW-XRP: ￦" + commonUtil.numberWithCommas(market_summary.xrp.last) + "\r\n" +
+                "Korbit KRW-BCH: ￦" + commonUtil.numberWithCommas(market_summary.bcc.last) + "\r\n"
 
             bot.sendMessage(chatId, m)
             return
