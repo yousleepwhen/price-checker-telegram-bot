@@ -11,6 +11,7 @@ const Korbit = require('./exchange/korbit').Korbit
 const CoinMarketCap = require('./exchange/coinmarketcap').CoinMarketCap
 const Poloniex = require('./exchange/poloniex').Poloniex
 const Yahoo = require("./exchange/yahoo").Yahoo
+const Bithumb = require('./exchange/bithumb').Bithumb
 
 
 // const coinMarketCap = require('./exchange/coinmarketcap').coinMarketCap
@@ -59,6 +60,9 @@ poloniex.run(5000)
 
 const yahoo = new Yahoo()
 yahoo.run(5000)
+
+const bithumb = new Bithumb()
+bithumb.run(5000)
 
 const Predicate = function(type, comparator ,value){
     if(!(this instanceof Predicate)) return new Alarm(type, comparator, value)
@@ -127,38 +131,8 @@ let current_usdt_eth = 0.0;
 let prev_usdt_btc = 0.0;
 let prev_usdt_eth = 0.0;
 
-let bithumb_ticker = {
-
-}
-
-
-
-let usd = 0;
-
-
 // Create a bot that uses 'polling' to fetch new updates
 const bot = new TelegramBot(token, {polling: true});
-
-
-
-
-
-function bithum_ticker_parse(data){
-    return _.each(data, (d) => d.last = d.closing_price)
-}
-
-function bithumb_ticker_all(){
-    request('https://api.bithumb.com/public/ticker/ALL', function (error, response, body) {
-        if (!error && response.statusCode == 200) {
-            // console.log(body) // Print the google web page.
-            bithumb_ticker = bithum_ticker_parse(JSON.parse(body).data)
-        }
-    })
-}
-
-
-bithumb_ticker_all()
-setInterval(bithumb_ticker_all, 6000)
 
 
 
@@ -278,6 +252,8 @@ function calcKoreanPremium(){
     let usd_krw_rate = yahoo.getRate()
 
     let bittrex_market_summary = bittrex.getMarketSummary()
+    let bithumb_ticker = bithumb.getTicker()
+
     let usdDash = parseFloat(_.find(bittrex_market_summary, {'MarketName':'USDT-DASH'}).Last)
     let krwDash = parseFloat(bithumb_ticker.DASH.last)
 
@@ -489,9 +465,6 @@ bot.on('message', (msg) => {
             let usdtEth = ticker['USDT_ETH']
             let usdtBtc = ticker['USDT_BTC']
 
-            // console.log(usdtEth.last)
-            // console.log(usdtBtc.last)
-
             let m =
                 "Poloniex USDT-BTC: $" + parseFloat(usdtBtc['last']).toFixed(4) + "\r\n" +
                 "Poloniex USDT-ETH: $" + parseFloat(usdtEth['last']).toFixed(4) + "\r\n"
@@ -500,6 +473,7 @@ bot.on('message', (msg) => {
             return
         }
         case '빗썸': {
+            let bithumb_ticker = bithumb.getTicker()
             let m =
                 "Bithumb KRW-BTC: ￦" + commonUtil.numberWithCommas(bithumb_ticker.BTC.last) + "\r\n" +
                 "Bithumb KRW-ETH: ￦" + commonUtil.numberWithCommas(bithumb_ticker.ETH.last) + "\r\n" +
