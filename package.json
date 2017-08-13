@@ -1,7 +1,7 @@
 {
   "name": "price-checker-telegram-bot",
-  "version": "1.0.0",
-  "description": "korbit, bittrex market price checker bot",
+  "version": "0.0.1",
+  "description": "crytocurrency price checker bot",
   "main": "bot.js",
   "scripts": {
     "start": "node bot.js",
