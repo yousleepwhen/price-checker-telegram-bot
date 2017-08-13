@@ -9,6 +9,6 @@
 
 환경 변수에 다음을 추가해야한다. 
 
-#### # AWS Elastic Beanstalk 실행 시 Environment variables: TELEGRAM_BOT_TOKEN 키에 값 추거
+#### # AWS Elastic Beanstalk 실행 시 Environment variables: TELEGRAM_BOT_TOKEN 키에 값 추가
     $ eb deploy
     
