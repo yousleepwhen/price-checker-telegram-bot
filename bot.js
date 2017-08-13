@@ -1,7 +1,6 @@
 
 const commonUtil = require('./util/common.js')
 const _ = require('lodash')
-const request = require('request')
 
 const TelegramBot = require('node-telegram-bot-api');
 const appConfig = require('./config/config.json')
@@ -13,16 +12,13 @@ const Poloniex = require('./exchange/poloniex').Poloniex
 const Yahoo = require("./exchange/yahoo").Yahoo
 const Bithumb = require('./exchange/bithumb').Bithumb
 
+if(!process.env.TELEGRAM_BOT_TOKEN){
+    throw "Telegram bot token missing"
+}
 
-// const coinMarketCap = require('./exchange/coinmarketcap').coinMarketCap
-// if(!process.env.TELEGRAM_BOT_TOKEN){
-//     throw "Telegram bot token missing"
-// }
-
-// const token = process.env.TELEGRAM_API_TOKEN
+const token = process.env.TELEGRAM_API_TOKEN
 // const token = '414024453:AAHQg3QrU-_WG77FHUyB9WIuTYKJXl_l10E' //production
-const token = '433274725:AAEb_5Mv6r23atBuYG42iib0Ma7011mx4e8' //dev
-
+// const token = '433274725:AAEb_5Mv6r23atBuYG42iib0Ma7011mx4e8' //dev
 
 Object.defineProperty(Array.prototype, 'chunk_inefficient', {
     value: function(chunkSize) {
@@ -34,6 +30,10 @@ Object.defineProperty(Array.prototype, 'chunk_inefficient', {
         );
     }
 });
+
+
+const bot = new TelegramBot(token, {polling: true})
+
 
 const PriceChecker = function(telegram_bot) {
     if(!(this instanceof PriceChecker)) return new PriceChecker(telegram_bot)
@@ -132,7 +132,6 @@ let prev_usdt_btc = 0.0;
 let prev_usdt_eth = 0.0;
 
 // Create a bot that uses 'polling' to fetch new updates
-const bot = new TelegramBot(token, {polling: true});
 
 
 
