@@ -1,3 +1,4 @@
+
 const commonUtil = require('./util/common.js')
 const _ = require('lodash')
 const request = require('request')
@@ -9,6 +10,7 @@ const Bittrex = require('./exchange/bittrex').Bittrex
 const Korbit = require('./exchange/korbit').Korbit
 const CoinMarketCap = require('./exchange/coinmarketcap').CoinMarketCap
 const Poloniex = require('./exchange/poloniex').Poloniex
+const Yahoo = require("./exchange/yahoo").Yahoo
 
 
 // const coinMarketCap = require('./exchange/coinmarketcap').coinMarketCap
@@ -54,6 +56,9 @@ coinMarketCap.run(5000)
 
 const poloniex = new Poloniex()
 poloniex.run(5000)
+
+const yahoo = new Yahoo()
+yahoo.run(5000)
 
 const Predicate = function(type, comparator ,value){
     if(!(this instanceof Predicate)) return new Alarm(type, comparator, value)
@@ -129,24 +134,6 @@ let bithumb_ticker = {
 
 
 let usd = 0;
-
-function getKWRUSDRate(){
-    request('http://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20yahoo.finance.xchange%20where%20pair%3D%22USDKRW%22&format=json&diagnostics=true&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys',
-        function(err, response, body){
-            if (!err && response.statusCode == 200) {
-                // console.log(JSON.parse(body))
-                let data = JSON.parse(body)
-                // console.log(bittrex_ticker.result) // Print the google web page.
-                usd = parseFloat(data['query']['results']['rate']['Rate']);
-                console.log(usd);
-
-            }
-        })
-}
-
-getKWRUSDRate()
-setInterval(getKWRUSDRate, 5000)
-
 
 
 // Create a bot that uses 'polling' to fetch new updates
@@ -288,6 +275,8 @@ let last_koreanPremium = {
     }
 }
 function calcKoreanPremium(){
+    let usd_krw_rate = yahoo.getRate()
+
     let bittrex_market_summary = bittrex.getMarketSummary()
     let usdDash = parseFloat(_.find(bittrex_market_summary, {'MarketName':'USDT-DASH'}).Last)
     let krwDash = parseFloat(bithumb_ticker.DASH.last)
@@ -297,9 +286,9 @@ function calcKoreanPremium(){
     let krwEth = parseFloat(bithumb_ticker.ETH.last)
     let krwBtc = parseFloat(bithumb_ticker.BTC.last)
 
-    let usdKrwDash = usdDash * usd
-    let usdKrwEth = usdEth * usd
-    let usdKrwBtc = usdBtc * usd
+    let usdKrwDash = usdDash * usd_krw_rate
+    let usdKrwEth = usdEth * usd_krw_rate
+    let usdKrwBtc = usdBtc * usd_krw_rate
 
 
     let rate = krwDash / usdKrwDash * 100 - 100
@@ -329,12 +318,12 @@ function calcKoreanPremium(){
     last_koreanPremium.btc = btcRate
     last_koreanPremium.dash = rate
 
-    let m = "KRW USD 환율: 1$ = "+ usd + "원\r\n" +
+    let m = "KRW USD 환율: 1$ = "+ usd_krw_rate + "원\r\n" +
         "🇰🇷😈  Bittrex:Bithumb\r\n" +
         "DASH:<b>" + rate.toFixed(4)  + "% </b>" +rateIcon+ "\r\n" +
 
         "ETH :<b>\r\n" +
-        "     USD : $"+ usdEth +"(₩"+ commonUtil.numberWithCommas((usdEth * usd).toFixed(4)) +")\r\n" +
+        "     USD : $"+ usdEth +"(₩"+ commonUtil.numberWithCommas((usdEth * usd_krw_rate).toFixed(4)) +")\r\n" +
         "     KRW : ₩"+ commonUtil.numberWithCommas(krwEth) +"\r\n" +
         "     DIFF :" + ethRate.toFixed(4) + "% </b>" +ethRateIcon+ "\r\n" +
 
