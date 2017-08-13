@@ -4,11 +4,7 @@ const Poloniex = function(){
     if(!(this instanceof Poloniex)) return new Poloniex()
 
     let ticker
-    let global_market_summary
     let timer
-
-
-
 
     this.get_poloniex_ticker = function(){
         request('https://poloniex.com/public?command=returnTicker', function (error, response, body) {
