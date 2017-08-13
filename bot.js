@@ -16,7 +16,7 @@ if(!process.env.TELEGRAM_BOT_TOKEN){
     throw "Telegram bot token missing"
 }
 
-const token = process.env.TELEGRAM_API_TOKEN
+const token = process.env.TELEGRAM_BOT_TOKEN
 // const token = '414024453:AAHQg3QrU-_WG77FHUyB9WIuTYKJXl_l10E' //production
 // const token = '433274725:AAEb_5Mv6r23atBuYG42iib0Ma7011mx4e8' //dev
 
@@ -113,6 +113,11 @@ const Alarm = function(owner, chatId, predicate, freq){
         }
     }
 }
+let current_alarm_processing;
+let current_alarm_type;
+let current_alarm_comparator;
+let current_alarm_value;
+let current_alarm_freq;
 
 let alarms =[]
 
@@ -177,17 +182,17 @@ function bittrextStringParse(tickerData){
             lastUSD = " $" + (parseFloat(tickerData.Last) * usdt_btc_market.Last).toFixed(4)
             prevUSD = " $" + (parseFloat(tickerData.PrevDay)* usdt_btc_market.PrevDay).toFixed(4)
 
-            usdChange = (parseFloat(tickerData.Last) * usdt_btc_market.Last).toFixed(4)/ (parseFloat(tickerData.PrevDay)* usdt_btc_market.PrevDay).toFixed(4) * 100 - 100
+            usdChange = commonUtil.getChange(tickerData.Last * usdt_btc_market.Last, tickerData.PrevDay * usdt_btc_market.PrevDay, 2)
         }
         if(key==="ETH"){
-            lastUSD = " $" + (parseFloat(tickerData.Last) * current_usdt_eth).toFixed(4)
-            prevUSD = " $" + (parseFloat(tickerData.PrevDay) * prev_usdt_eth).toFixed(4)
-            usdChange = (parseFloat(tickerData.Last) * current_usdt_eth) / (parseFloat(tickerData.PrevDay)* prev_usdt_eth).toFixed(4) * 100 - 100
+            lastUSD = " $" + (parseFloat(tickerData.Last) * usdt_eth_market.Last).toFixed(4)
+            prevUSD = " $" + (parseFloat(tickerData.PrevDay) * usdt_eth_market.PrevDay).toFixed(4)
+            usdChange = commonUtil.getChange(parseFloat(tickerData.Last) * usdt_eth_market.Last,parseFloat(tickerData.PrevDay)* usdt_eth_market.PrevDay ,2)
         }
         if(key==="USDT"){
             lastUSD =" $" + parseFloat(tickerData.Last).toFixed(4)
             prevUSD =" $" + parseFloat(tickerData.PrevDay).toFixed(4)
-            usdChange = (parseFloat(tickerData.Last)) / (parseFloat(tickerData.PrevDay)).toFixed(4) * 100 - 100
+            usdChange = commonUtil.getChange(tickerData.Last, tickerData.PrevDay,2)
 
         }
 
@@ -203,9 +208,9 @@ function bittrextStringParse(tickerData){
         let usdChangeText;
         // let usdChange = parseFloat(lastUSD / prevUSD).toFixed(4)
         if(usdChange < 0.0){
-            usdChangeText = "USD Change: <b>" +usdChange.toFixed(2)+ "%</b>" +getHowManyEmoji("😭", usdChange.toFixed(2)) +"\r\n"
+            usdChangeText = "USD Change: <b>" +usdChange+ "%</b>" +getHowManyEmoji("😭", usdChange) +"\r\n"
         }else{
-            usdChangeText = "USD Change: <b>" +usdChange.toFixed(2)+ "%</b>"+getHowManyEmoji("🤑", usdChange.toFixed(2))+"\r\n"
+            usdChangeText = "USD Change: <b>" +usdChange+ "%</b>"+getHowManyEmoji("🤑", usdChange)+"\r\n"
         }
 
 
@@ -322,11 +327,6 @@ bot.onText(/\alarm/,(msg) => {
     });
 })
 
-let current_alarm_processing;
-let current_alarm_type;
-let current_alarm_comparator;
-let current_alarm_value;
-let current_alarm_freq;
 
 bot.on('message', (msg) => {
     const chatId = msg.chat.id;
