@@ -1,4 +1,5 @@
 const request = require('request')
+const _ = require('lodash')
 
 const Bittrex = function() {
     if(!(this instanceof Bittrex)) return new Bittrex()
@@ -12,10 +13,6 @@ const Bittrex = function() {
         request('https://bittrex.com/api/v1.1/public/getmarketsummaries', function (error, response, body) {
             if (!error && response.statusCode == 200) {
                 market_summary = JSON.parse(body).result
-                // current_usdt_btc = _.find(bittrex_ticker, {'MarketName':'USDT-BTC'}).Last
-                // current_usdt_eth = _.find(bittrex_ticker, {'MarketName':'USDT-ETH'}).Last
-                // prev_usdt_btc = _.find(bittrex_ticker, {'MarketName':'USDT-BTC'}).PrevDay
-                // prev_usdt_eth = _.find(bittrex_ticker, {'MarketName':'USDT-ETH'}).PrevDay
             }
         })
     }
@@ -42,6 +39,7 @@ const Bittrex = function() {
         clearInterval(timer)
         timer = null
     }
+
     this.getMarketSummary = () => market_summary
     this.getMarkets = () => market_info
 }

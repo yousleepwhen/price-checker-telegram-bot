@@ -167,15 +167,18 @@ function bittrextStringParse(tickerData){
 
         let key = commonUtil.getKeySymbol(marketTitle,"-")
 
+        let usdt_btc_market = _.find(bittrex.getMarketSummary(),{'MarketName':'USDT-BTC'})
+        let usdt_eth_market = _.find(bittrex.getMarketSummary(),{'MarketName':'USDT-ETH'})
+
         let lastUSD;
         let prevUSD;
         let usdChange;
 
         if(key==="BTC"){
-            lastUSD = " $" + (parseFloat(tickerData.Last) * current_usdt_btc).toFixed(4)
-            prevUSD = " $" + (parseFloat(tickerData.PrevDay)* prev_usdt_btc).toFixed(4)
+            lastUSD = " $" + (parseFloat(tickerData.Last) * usdt_btc_market.Last).toFixed(4)
+            prevUSD = " $" + (parseFloat(tickerData.PrevDay)* usdt_btc_market.PrevDay).toFixed(4)
 
-            usdChange = (parseFloat(tickerData.Last) * current_usdt_btc) / (parseFloat(tickerData.PrevDay)* prev_usdt_btc).toFixed(4) * 100 - 100
+            usdChange = (parseFloat(tickerData.Last) * usdt_btc_market.Last).toFixed(4)/ (parseFloat(tickerData.PrevDay)* usdt_btc_market.PrevDay).toFixed(4) * 100 - 100
         }
         if(key==="ETH"){
             lastUSD = " $" + (parseFloat(tickerData.Last) * current_usdt_eth).toFixed(4)
@@ -206,17 +209,15 @@ function bittrextStringParse(tickerData){
             usdChangeText = "USD Change: <b>" +usdChange.toFixed(2)+ "%</b>"+getHowManyEmoji("🤑", usdChange.toFixed(2))+"\r\n"
         }
 
-        let usdt_btc_market = _.find(bittrex.getMarketSummary(),{'MarketName':'USDT-BTC'})
-        let usdt_eth_market = _.find(bittrex.getMarketSummary(),{'MarketName':'USDT-ETH'})
 
 
         let msg = "" +
-            "최근 BTC: 💲<b>" + commonUtil.numberWithCommas(usdt_btc_market.Last) + "</b>\r\n" +
-            "어제 BTC: 💲<b>" + commonUtil.numberWithCommas(usdt_btc_market.PrevDay) + "</b>\r\n" +
+            "최근 BTC: 💲<b>" + commonUtil.numberWithCommas(usdt_btc_market.Last.toFixed(2)) + "</b>\r\n" +
+            "어제 BTC: 💲<b>" + commonUtil.numberWithCommas(usdt_btc_market.PrevDay.toFixed(2)) + "</b>\r\n" +
             "BTC USD Change: " + commonUtil.getChange(usdt_btc_market.Last, usdt_btc_market.PrevDay, 2) + "%\r\n" +
             "\r\n" +
-            "최근 ETH: 💲<b>" + commonUtil.numberWithCommas(usdt_eth_market.Last) + "</b>\r\n" +
-            "어제 ETH: 💲<b>" + commonUtil.numberWithCommas(usdt_eth_market.PrevDay) + "</b>\r\n" +
+            "최근 ETH: 💲<b>" + commonUtil.numberWithCommas(usdt_eth_market.Last.toFixed(2)) + "</b>\r\n" +
+            "어제 ETH: 💲<b>" + commonUtil.numberWithCommas(usdt_eth_market.PrevDay.toFixed(2)) + "</b>\r\n" +
             "ETH USD Change: " + commonUtil.getChange(usdt_eth_market.Last, usdt_eth_market.PrevDay, 2) + "%\r\n"+
 
             "=============\r\n" +
@@ -266,45 +267,33 @@ function calcKoreanPremium(){
     let usdKrwEth = usdEth * usd_krw_rate
     let usdKrwBtc = usdBtc * usd_krw_rate
 
+    let dashRate = commonUtil.getChange(krwDash, usdKrwDash, 2)
+    let ethRate = commonUtil.getChange(krwEth ,usdKrwEth ,2)
+    let btcRate = commonUtil.getChange(krwBtc , usdKrwBtc,2)
 
-    let rate = krwDash / usdKrwDash * 100 - 100
-    let rateIcon, ethRateIcon, btcRateIcon;
 
-
-    let ethRate = krwEth / usdKrwEth * 100 - 100
-    let btcRate = krwBtc / usdKrwBtc * 100 - 100
-
-    if(rate > 0.0){
-        rateIcon = "👍"
-    } else {
-        rateIcon = "👎"
-    }
-
-    if(ethRate > 0.0){
-        ethRateIcon = "👍"
-    } else {
-        ethRateIcon = "👎"
-    }
-    if(btcRate > 0.0){
-        btcRateIcon = "👍"
-    } else {
-        btcRateIcon = "👎"
+    const getIcon = function(rate){
+        if(rate > 0.0){
+            return rate + "% 👍"
+        }
+        else if( rate < 0.0){
+            return rate + "% 👎"
+        } else return rate +"%"
     }
     last_koreanPremium.eth = ethRate
     last_koreanPremium.btc = btcRate
-    last_koreanPremium.dash = rate
+    last_koreanPremium.dash = dashRate
 
     let m = "KRW USD 환율: 1$ = "+ usd_krw_rate + "원\r\n" +
         "🇰🇷😈  Bittrex:Bithumb\r\n" +
-        "DASH:<b>" + rate.toFixed(4)  + "% </b>" +rateIcon+ "\r\n" +
+        "DASH:<b>" + getIcon(dashRate)+ "</b>\r\n" +
 
         "ETH :<b>\r\n" +
         "     USD : $"+ usdEth +"(₩"+ commonUtil.numberWithCommas((usdEth * usd_krw_rate).toFixed(4)) +")\r\n" +
         "     KRW : ₩"+ commonUtil.numberWithCommas(krwEth) +"\r\n" +
-        "     DIFF :" + ethRate.toFixed(4) + "% </b>" +ethRateIcon+ "\r\n" +
+        "     DIFF :" + getIcon(ethRate) + "</b>\r\n" +
 
-        "BTC :<b>" + btcRate.toFixed(4) + "% </b>" + btcRateIcon
-
+        "BTC :<b>" + getIcon(btcRate) +"</b>"
     return m;
 }
 
@@ -500,17 +489,16 @@ bot.on('message', (msg) => {
             return
         }
         default :{
-            if(_.find(bittrex.getMarkets(), {'MarketName':msg.text.replace('/','').toUpperCase()}) === undefined)
+            let market = _.find(bittrex.getMarkets(),{'MarketName':msg.text.replace('/','').toUpperCase()})
+            if(market === undefined)
                 return;
-
-            let photoUrl = _.find(bittrex.getMarkets(), {'MarketName':msg.text.replace('/','').toUpperCase()}).LogoUrl
-
-            if(photoUrl!==null){
-                bot.sendPhoto(chatId,photoUrl);
+            if(market.LogoUrl !== null){
+                bot.sendPhoto(chatId,market.LogoUrl);
             }
 
+            let market_summary = _.find(bittrex.getMarketSummary(), {'MarketName':msg.text.replace('/','').toUpperCase()})
 
-            let returnMsg = bittrextStringParse(_.find(bittrex.getMarketSummary(), {'MarketName':msg.text.replace('/','').toUpperCase()}))
+            let returnMsg = bittrextStringParse(market_summary)
             bot.sendMessage(chatId, returnMsg,{parse_mode : "HTML"})
 
             defaultKeyboard(msg.chat.id)
