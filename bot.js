@@ -8,6 +8,8 @@ const appConfig = require('./config/config.json')
 const Bittrex = require('./exchange/bittrex').Bittrex
 const Korbit = require('./exchange/korbit').Korbit
 const CoinMarketCap = require('./exchange/coinmarketcap').CoinMarketCap
+const Poloniex = require('./exchange/poloniex').Poloniex
+
 
 // const coinMarketCap = require('./exchange/coinmarketcap').coinMarketCap
 // if(!process.env.TELEGRAM_BOT_TOKEN){
@@ -50,6 +52,8 @@ korbit.run(5000)
 const coinMarketCap = new CoinMarketCap()
 coinMarketCap.run(5000)
 
+const poloniex = new Poloniex()
+poloniex.run(5000)
 
 const Predicate = function(type, comparator ,value){
     if(!(this instanceof Predicate)) return new Alarm(type, comparator, value)
@@ -113,10 +117,6 @@ setInterval(() => {
 }, 10000)
 
 
-let poloniex_ticker = {
-}
-
-
 let current_usdt_btc = 0.0;
 let current_usdt_eth = 0.0;
 let prev_usdt_btc = 0.0;
@@ -125,22 +125,6 @@ let prev_usdt_eth = 0.0;
 let bithumb_ticker = {
 
 }
-
-
-
-function run_poloniex_ticker() {
-    request('https://poloniex.com/public?command=returnTicker', function (error, response, body) {
-        if (!error && response.statusCode == 200) {
-            let data = JSON.parse(body)
-            poloniex_ticker = data
-            // console.log(poloniex_ticker)
-
-        }
-    })
-}
-
-run_poloniex_ticker()
-setInterval(run_poloniex_ticker, 5000)
 
 
 
@@ -512,8 +496,9 @@ bot.on('message', (msg) => {
             return
         }
         case 'POLO':{
-            let usdtEth = poloniex_ticker['USDT_ETH']
-            let usdtBtc = poloniex_ticker['USDT_BTC']
+            let ticker = poloniex.getTicker()
+            let usdtEth = ticker['USDT_ETH']
+            let usdtBtc = ticker['USDT_BTC']
 
             // console.log(usdtEth.last)
             // console.log(usdtBtc.last)
