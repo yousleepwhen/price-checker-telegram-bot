@@ -12,3 +12,12 @@
 #### # AWS Elastic Beanstalk 실행 시 Environment variables: TELEGRAM_BOT_TOKEN 키에 값 추거
     $ eb deploy
     
+
+
+### Todo
+- [x] Bittrex
+- [x] Korbit
+- [x] Bithumb
+- [x] Korean Premium
+- [ ] Poloniex
+- [ ] Alarm
