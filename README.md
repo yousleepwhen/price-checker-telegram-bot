@@ -11,7 +11,10 @@
 
 #### # AWS Elastic Beanstalk 실행 시 Environment variables: TELEGRAM_BOT_TOKEN 키에 값 추가 
     $ eb deploy
-    
+
+
+#### # 배포 또는 실행 후 해당 텔레그램 봇 또는 텔레그램 봇이 있는 그룹 채팅에서
+    /start
 
 ### Todo
 - [x] Bittrex
