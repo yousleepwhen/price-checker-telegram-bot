@@ -19,9 +19,30 @@ if(!process.env.TELEGRAM_BOT_TOKEN){
 const token = process.env.TELEGRAM_BOT_TOKEN
 // const token = '414024453:AAHQg3QrU-_WG77FHUyB9WIuTYKJXl_l10E' //production
 // const token = '433274725:AAEb_5Mv6r23atBuYG42iib0Ma7011mx4e8' //dev
+var webshot = require('webshot');
+var options = {
+    windowSize:{
+      width:1150,
+      height:800
+    },
+    shotOffset:{
+        top:370,
+        left:30
+    },
+    screenSize: {
+        width: 1150
+        , height: 800
+    }
+    , shotSize: {
+        width: 1150
+        , height: 800
+    },
+    userAgent: 'Mozilla/5.0 (iPhone; U; CPU iPhone OS 3_2 like Mac OS X; en-us)'
+    + ' AppleWebKit/531.21.20 (KHTML, like Gecko) Mobile/7B298g'
+};
+webshot('coinmarketcap.com', 'cap.png',options, function(err) {
 
-
-
+})
 
 const bot = new TelegramBot(token, {polling: true})
 
@@ -437,6 +458,13 @@ bot.on('message', (msg) => {
             bot.sendMessage(chatId, strArr.join("\r\n"))
             return
         }
+        case '/shot' :{
+            webshot('coinmarketcap.com', 'cap.png',options, function(err) {
+                bot.sendPhoto(chatId,'cap.png');
+            })
+            return
+
+        }
         case '빗썸': {
             let bithumb_ticker = bithumb.getTicker()
             let keys = Object.keys(_.omit(bithumb_ticker,'date'))// date??
@@ -445,6 +473,7 @@ bot.on('message', (msg) => {
             return
         }
         case '김프': {
+            bot.sendPhoto(chatId,'google.png');
             bot.sendMessage(chatId, calcKoreanPremium(), {parse_mode : "HTML"})
             return
         }
@@ -459,6 +488,7 @@ bot.on('message', (msg) => {
             return
         }
         default :{
+
             let market = _.find(bittrex.getMarkets(),{'MarketName':msg.text.replace('/','').toUpperCase()})
             if(market === undefined)
                 return;
