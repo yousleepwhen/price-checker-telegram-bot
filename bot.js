@@ -11,7 +11,7 @@ const CoinMarketCap = require('./exchange/coinmarketcap').CoinMarketCap
 const Poloniex = require('./exchange/poloniex').Poloniex
 const Yahoo = require("./exchange/yahoo").Yahoo
 const Bithumb = require('./exchange/bithumb').Bithumb
-
+//
 if(!process.env.TELEGRAM_BOT_TOKEN){
     throw "Telegram bot token missing"
 }
@@ -19,18 +19,31 @@ if(!process.env.TELEGRAM_BOT_TOKEN){
 const token = process.env.TELEGRAM_BOT_TOKEN
 // const token = '414024453:AAHQg3QrU-_WG77FHUyB9WIuTYKJXl_l10E' //production
 // const token = '433274725:AAEb_5Mv6r23atBuYG42iib0Ma7011mx4e8' //dev
-
-Object.defineProperty(Array.prototype, 'chunk_inefficient', {
-    value: function(chunkSize) {
-        var array=this;
-        return [].concat.apply([],
-            array.map(function(elem,i) {
-                return i%chunkSize ? [] : [array.slice(i,i+chunkSize)];
-            })
-        );
+let webshot = require('webshot');
+let options = {
+    windowSize:{
+      width:1150,
+      height:800
+    },
+    shotOffset:{
+        top:370,
+        left:30
+    },
+    screenSize: {
+        width: 1150
+        , height: 800
     }
-});
-
+    , shotSize: {
+        width: 1150
+        , height: 800
+    },
+    // phantomPath:'/opt/phantomjs/bin/phantomjs',
+    userAgent: 'Mozilla/5.0 (iPhone; U; CPU iPhone OS 3_2 like Mac OS X; en-us)'
+    + ' AppleWebKit/531.21.20 (KHTML, like Gecko) Mobile/7B298g'
+};
+webshot('coinmarketcap.com', 'cap.png',options, function(err) {
+})
+let webshot_access = false
 
 const bot = new TelegramBot(token, {polling: true})
 
@@ -91,6 +104,7 @@ const Predicate = function(type, comparator ,value){
             } else return false
 
         } else if(this.type === "Market"){
+            //todo market ticker alarm
 
         }
     }
@@ -345,7 +359,8 @@ bot.on('message', (msg) => {
         }
         case 'BITTREX': {
             let arr = _.sortBy(bittrex.getMarketSummary(),(market) => parseFloat(market.Last))
-            let market_array = _.map(_(arr).reverse().value(),'MarketName').chunk_inefficient(3)
+            let market_array = _.chunk(_.map(_(arr).reverse().value(),'MarketName'),3)
+            // let market_array = _.map(_(arr).reverse().value(),'MarketName').chunk_inefficient(3)
             market_array.push(['Cancel'])
             bot.sendMessage(msg.chat.id, "Whice one?", {
                 "reply_markup": {
@@ -425,11 +440,9 @@ bot.on('message', (msg) => {
         case '/코빗':
         case '코빗': {
             let market_summary = korbit.getMarketSummary()
-            // console.log(market_summary)
             let strArr = _.map(market_summary, market => {
-              return "Korbit " + market.MarketName + ": ￦" + commonUtil.numberWithCommas(market.last)
+              return "Korbit " + market.MarketName + ": ￦" + commonUtil.numberWithCommas(market.last || 0)
             })
-            // console.log(strArr.join("\r\n"))
 
             bot.sendMessage(chatId, strArr.join("\r\n"))
             return
@@ -446,6 +459,18 @@ bot.on('message', (msg) => {
             bot.sendMessage(chatId, strArr.join("\r\n"))
             return
         }
+        case '/shot' :{
+            if(!webshot_access){
+                webshot_access = true
+                webshot('coinmarketcap.com', 'cap.png',options, function(err) {
+                    bot.sendPhoto(chatId,'cap.png');
+                    webshot_access = false
+                })
+            }
+
+            return
+
+        }
         case '빗썸': {
             let bithumb_ticker = bithumb.getTicker()
             let keys = Object.keys(_.omit(bithumb_ticker,'date'))// date??
@@ -454,6 +479,7 @@ bot.on('message', (msg) => {
             return
         }
         case '김프': {
+            bot.sendPhoto(chatId,'google.png');
             bot.sendMessage(chatId, calcKoreanPremium(), {parse_mode : "HTML"})
             return
         }
@@ -468,6 +494,7 @@ bot.on('message', (msg) => {
             return
         }
         default :{
+
             let market = _.find(bittrex.getMarkets(),{'MarketName':msg.text.replace('/','').toUpperCase()})
             if(market === undefined)
                 return;

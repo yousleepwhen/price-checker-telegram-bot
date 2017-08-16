@@ -24,7 +24,7 @@ const CoinMarketCap = function(){
     }
     this.stop = function(){
         clearInterval(timer)
-        timer = null
+        timer = undefined
     }
     this.getSummary = () => global_market_summary
 }

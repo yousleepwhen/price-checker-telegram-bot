@@ -30,7 +30,7 @@ const Bithumb = function(){
     }
     this.stop = function(){
         clearInterval(timer)
-        timer = null
+        timer = undefined
     }
     this.getTicker = () => ticker
 }
