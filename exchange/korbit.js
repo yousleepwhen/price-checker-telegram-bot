@@ -5,28 +5,42 @@ const Korbit = function() {
     if(!(this instanceof Korbit)) return new Korbit()
 
     let market_summary = {
-        eth:{},
-        btc:{},
-        bcc:{},
-        xrp:{},
-        etc:{}
+        eth:{
+            MarketName:'KRW-ETH',
+            Symbol:'ETH'
+        },
+        btc:{
+            MarketName:'KRW-BTC',
+            Symbol:'BTC'
+        },
+        bch:{
+            MarketName:'KRW-BCH',
+            Symbol:'BCH'
+        },
+        xrp:{
+            MarketName:'KRW-XRP',
+            Symbol:'XRP'
+        },
+        etc:{
+            MarketName:'KRW-ETC',
+            Symbol:'ETC'
+        }
     }
 
     let timer
 
-    let market = ['xrp','btc','eth','etc','bcc']
-
     const get_korbit_ticker = function(name){
-        request('https://api.korbit.co.kr/v1/ticker?currency_pair='+ name +'_krw', function (error, response, body) {
+        // console.log(name)
+        request('https://api.korbit.co.kr/v1/ticker?currency_pair='+ name.toLowerCase() +'_krw', function (error, response, body) {
             if (!error && response.statusCode == 200) {
-                market_summary[name] = JSON.parse(body)
+                market_summary[name.toLowerCase()] = Object.assign(market_summary[name.toLowerCase()], JSON.parse(body))
             }
         })
     }
 
 
     this.get_korbit_market_summary = function(){
-        _.each(market, m => get_korbit_ticker(m))
+        _.each(market_summary, m => get_korbit_ticker(m.Symbol))
     }
 
     this.run = function(interval){
@@ -41,7 +55,7 @@ const Korbit = function() {
     }
     this.stop = function(){
         clearInterval(timer)
-        timer = null
+        timer = undefined
     }
     this.getMarketSummary = () => market_summary
 }
