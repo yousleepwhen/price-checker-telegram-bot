@@ -131,14 +131,6 @@ setInterval(() => {
 }, 10000)
 
 
-let current_usdt_btc = 0.0;
-let current_usdt_eth = 0.0;
-let prev_usdt_btc = 0.0;
-let prev_usdt_eth = 0.0;
-
-// Create a bot that uses 'polling' to fetch new updates
-
-
 
 bot.onText(/\/echo (.+)/, (msg, match) => {
     // 'msg' is the received Message from Telegram
@@ -433,15 +425,13 @@ bot.on('message', (msg) => {
         case '/코빗':
         case '코빗': {
             let market_summary = korbit.getMarketSummary()
-            console.log(market_summary)
-            let m =
-                "Korbit KRW-BTC: ￦" + commonUtil.numberWithCommas(market_summary.btc.last) + "\r\n" +
-                "Korbit KRW-ETH: ￦" + commonUtil.numberWithCommas(market_summary.eth.last) + "\r\n" +
-                "Korbit KRW-ETC: ￦" + commonUtil.numberWithCommas(market_summary.etc.last) + "\r\n" +
-                "Korbit KRW-XRP: ￦" + commonUtil.numberWithCommas(market_summary.xrp.last) + "\r\n" +
-                "Korbit KRW-BCH: ￦" + commonUtil.numberWithCommas(market_summary.bcc.last) + "\r\n"
+            // console.log(market_summary)
+            let strArr = _.map(market_summary, market => {
+              return "Korbit " + market.MarketName + ": ￦" + commonUtil.numberWithCommas(market.last)
+            })
+            // console.log(strArr.join("\r\n"))
 
-            bot.sendMessage(chatId, m)
+            bot.sendMessage(chatId, strArr.join("\r\n"))
             return
         }
         case 'COINONE':
