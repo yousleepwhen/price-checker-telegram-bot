@@ -37,7 +37,7 @@ const Bittrex = function() {
     }
     this.stop = function(){
         clearInterval(timer)
-        timer = null
+        timer = undefined
     }
 
     this.getMarketSummary = () => market_summary
