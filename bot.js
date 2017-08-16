@@ -440,27 +440,17 @@ bot.on('message', (msg) => {
         }
         case 'POLO':{
             let ticker = poloniex.getTicker()
-            let usdtEth = ticker['USDT_ETH']
-            let usdtBtc = ticker['USDT_BTC']
+            let usdtTickerKey = _.filter(Object.keys(ticker), (t) =>  t.match(/^USDT_[a-z0-9A-Z]{3,6}$/))
 
-            let m =
-                "Poloniex USDT-BTC: $" + parseFloat(usdtBtc['last']).toFixed(4) + "\r\n" +
-                "Poloniex USDT-ETH: $" + parseFloat(usdtEth['last']).toFixed(4) + "\r\n"
-
-            bot.sendMessage(chatId,m)
+            let strArr = _.map(usdtTickerKey, (key) => "Poloniex " + key +": $" + parseFloat(ticker[key].last).toFixed(2))
+            bot.sendMessage(chatId, strArr.join("\r\n"))
             return
         }
         case '빗썸': {
             let bithumb_ticker = bithumb.getTicker()
-            let m =
-                "Bithumb KRW-BTC: ￦" + commonUtil.numberWithCommas(bithumb_ticker.BTC.last) + "\r\n" +
-                "Bithumb KRW-ETH: ￦" + commonUtil.numberWithCommas(bithumb_ticker.ETH.last) + "\r\n" +
-                "Bithumb KRW-ETC: ￦" + commonUtil.numberWithCommas(bithumb_ticker.ETC.last) + "\r\n" +
-                "Bithumb KRW-XRP: ￦" + commonUtil.numberWithCommas(bithumb_ticker.XRP.last) + "\r\n" +
-                "Bithumb KRW-DASH: ￦" + commonUtil.numberWithCommas(bithumb_ticker.DASH.last) + "\r\n" +
-                "Bithumb KRW-BCH: ￦" + commonUtil.numberWithCommas(bithumb_ticker.BCH.last) + "\r\n"
-
-            bot.sendMessage(chatId, m)
+            let keys = Object.keys(_.omit(bithumb_ticker,'date'))// date??
+            let strArr = _.map(keys, (key) => "Bithumb KRW-"+ key + ": ￦" + commonUtil.numberWithCommas(bithumb_ticker[key].last))
+            bot.sendMessage(chatId, strArr.join("\r\n"))
             return
         }
         case '김프': {

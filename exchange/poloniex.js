@@ -4,6 +4,7 @@ const Poloniex = function(){
     if(!(this instanceof Poloniex)) return new Poloniex()
 
     let ticker
+    let markets
     let timer
 
     this.get_poloniex_ticker = function(){
@@ -11,6 +12,7 @@ const Poloniex = function(){
             if (!error && response.statusCode == 200) {
                 let data = JSON.parse(body)
                 ticker = data
+                markets = Object.keys(data)
             }
         })
     }

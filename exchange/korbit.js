@@ -7,40 +7,35 @@ const Korbit = function() {
     let market_summary = {
         eth:{
             MarketName:'KRW-ETH',
-            Symbol:'ETH'
         },
         btc:{
             MarketName:'KRW-BTC',
-            Symbol:'BTC'
         },
         bch:{
             MarketName:'KRW-BCH',
-            Symbol:'BCH'
         },
         xrp:{
             MarketName:'KRW-XRP',
-            Symbol:'XRP'
         },
         etc:{
             MarketName:'KRW-ETC',
-            Symbol:'ETC'
         }
     }
 
     let timer
 
-    const get_korbit_ticker = function(name){
+    const get_korbit_ticker = function(key){
         // console.log(name)
-        request('https://api.korbit.co.kr/v1/ticker?currency_pair='+ name.toLowerCase() +'_krw', function (error, response, body) {
+        request('https://api.korbit.co.kr/v1/ticker?currency_pair='+ key +'_krw', function (error, response, body) {
             if (!error && response.statusCode == 200) {
-                market_summary[name.toLowerCase()] = Object.assign(market_summary[name.toLowerCase()], JSON.parse(body))
+                market_summary[key] = Object.assign(market_summary[key], JSON.parse(body))
             }
         })
     }
 
 
     this.get_korbit_market_summary = function(){
-        _.each(market_summary, m => get_korbit_ticker(m.Symbol))
+        _.each(Object.keys(market_summary), key => get_korbit_ticker(key))
     }
 
     this.run = function(interval){
