@@ -19,8 +19,8 @@ if(!process.env.TELEGRAM_BOT_TOKEN){
 const token = process.env.TELEGRAM_BOT_TOKEN
 // const token = '414024453:AAHQg3QrU-_WG77FHUyB9WIuTYKJXl_l10E' //production
 // const token = '433274725:AAEb_5Mv6r23atBuYG42iib0Ma7011mx4e8' //dev
-var webshot = require('webshot');
-var options = {
+let webshot = require('webshot');
+let options = {
     windowSize:{
       width:1150,
       height:800
@@ -42,8 +42,8 @@ var options = {
     + ' AppleWebKit/531.21.20 (KHTML, like Gecko) Mobile/7B298g'
 };
 webshot('coinmarketcap.com', 'cap.png',options, function(err) {
-
 })
+let webshot_access = false
 
 const bot = new TelegramBot(token, {polling: true})
 
@@ -460,9 +460,14 @@ bot.on('message', (msg) => {
             return
         }
         case '/shot' :{
-            webshot('coinmarketcap.com', 'cap.png',options, function(err) {
-                bot.sendPhoto(chatId,'cap.png');
-            })
+            if(!webshot_access){
+                webshot_access = true
+                webshot('coinmarketcap.com', 'cap.png',options, function(err) {
+                    bot.sendPhoto(chatId,'cap.png');
+                    webshot_access = false
+                })
+            }
+
             return
 
         }
