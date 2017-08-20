@@ -18,6 +18,8 @@
 
 #### # Bittrex Last Price Alarm 사용
     /add [Market]-[Coin]-[Compare]-[Value]
+    Market: BTC, ETH, USDT
+    Compare: GREATER, LESS
     /add eth-snt-greater-0.000175 (ETH마켓의 Status Network Token(SNT)의 가격이 0.000175 이상일 경우)
     
 ### Todo
