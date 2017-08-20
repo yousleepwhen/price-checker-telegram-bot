@@ -15,7 +15,7 @@ const Bithumb = require('./exchange/bithumb').Bithumb
 if(!process.env.TELEGRAM_BOT_TOKEN){
     throw "Telegram bot token missing"
 }
-
+//
 const token = process.env.TELEGRAM_BOT_TOKEN
 // const token = '414024453:AAHQg3QrU-_WG77FHUyB9WIuTYKJXl_l10E' //production
 // const token = '433274725:AAEb_5Mv6r23atBuYG42iib0Ma7011mx4e8' //dev
@@ -72,17 +72,24 @@ const poloniex = new Poloniex()
 poloniex.run(5000)
 
 const yahoo = new Yahoo()
-yahoo.run(5000)
+yahoo.run(10000)
 
 const bithumb = new Bithumb()
 bithumb.run(5000)
 
-const Predicate = function(type, comparator ,value){
-    if(!(this instanceof Predicate)) return new Alarm(type, comparator, value)
+const Predicate = function(type, comparator ,value, market, coin){
+    if(!(this instanceof Predicate)) return new Alarm(type, comparator, value, market, coin)
 
     this.type = type
     this.comparator = comparator
     this.value = value
+
+    this.market = market
+    this.coin = coin
+
+    this.getMarketTitle = function(){
+        return this.market + "-" + this.coin
+    }
 
     this.check = function(){
         if(this.type === "KrwPremium"){
@@ -105,6 +112,18 @@ const Predicate = function(type, comparator ,value){
 
         } else if(this.type === "Market"){
             //todo market ticker alarm
+            console.log(this.market + '-' + this.coin)
+            let m = bittrex.getMarketSummary().filter((m) => m.MarketName === this.market + '-' + this.coin)[0]
+            // console.log(m)
+            if(this.comparator.toUpperCase() === "GREATER"){
+                if(parseFloat(m.Last,10) > this.value ){
+                    return true
+                }
+            } else{
+                if(parseFloat(m.Last,10) < this.value ){
+                    return true
+                }
+            }
 
         }
     }
@@ -124,6 +143,12 @@ const Alarm = function(owner, chatId, predicate, freq){
                 "🔥🔥🔥🔥🔥🔥🔥\r\n" + calcKoreanPremium() + "\r\n" +
                 "🔥🔥🔥🔥🔥🔥🔥", {parse_mode : "HTML"})
 
+        } else if (this.predicate.type === "Market"){
+
+            let mName = this.predicate.getMarketTitle()
+            let m = bittrextStringParse(_.find(bittrex.getMarketSummary(), {'MarketName':mName}))
+            bot.sendMessage(this.chatId,"<b>Price Alert by " + this.owner + "</b>\r\n" +
+                "".concat(m), {parse_mode : "HTML"})
         }
     }
 }
@@ -158,15 +183,78 @@ bot.onText(/\/echo (.+)/, (msg, match) => {
     bot.sendMessage(chatId, resp);
 });
 
+bot.onText(/\add (.+)/,(msg, match) => {
+    console.log(msg)
+    let order = match[1].split('-')
+    if(order.length < 4){
+        return
+    }
+
+    console.log(order)
+    let markets = new Set(bittrex.getMarkets().map((m) => m.MarketName).map(m => m.match(/[A-Z]*[^-;]/).toString()))
+
+    // console.log(markets.has("ETH"))
+    if(!markets.has(order[0].toString().toUpperCase())){
+        console.log('no market')
+        bot.sendMessage(msg.chat.id, "No Market \r\n" + "Bittrex Market: " + new Array(...markets).join(' '))
+        return
+    }
+    let market = order[0].toUpperCase()
+    let summary = bittrex.getMarketSummary().filter((m) => m.MarketName === market.toUpperCase() + '-' + order[1].toString().toUpperCase())
+
+    console.log(market + '-' + order[1].toString().toUpperCase())
+    if(summary.length < 1){
+        console.log('no market')
+        bot.sendMessage(msg.chat.id, "Unknown Coin \r\n")
+        return
+    }
+
+    let type = order[2].toString().toUpperCase()
+    console.log(type)
+    if (!(type === "GREATER" || type === "LESS")) {
+        console.log('unknown compare')
+        bot.sendMessage(msg.chat.id, "Unknown Compare \r\n")
+        return
+    }
+
+    let v = parseFloat(order[3],10)
+    if(!_.isNumber(v)){
+        console.log('unknown value')
+        bot.sendMessage(msg.chat.id, "Unknown Value. Must be float value. \r\n")
+        return
+    }
+
+
+    let predicate = new Predicate("Market", type, v, market, order[1].toString().toUpperCase() )
+    let alarm = new Alarm(msg.from.first_name + msg.from.last_name, msg.chat.id, predicate, 1)
+
+    alarms.push(alarm)
+    bot.sendMessage(msg.chat.id, 'Alarm Saved! Total Alarm Count:' + alarms.length)
+
+
+    console.log(summary)
+
+    // console.log(_.map(bittrex.getMarkets(), 'MarketName').map())
+
+    console.log(markets)
+
+
+    // markets.has()
+    // console.log(bittrex.getMarkets().map((m) => m.MarketName).map(m => m.match(/\[A-Z]*[^-;]/)))
+
+})
+
 function getHowManyEmoji(e, v){
     if(Math.abs(v) >= 0 && 9.999 > Math.abs(v) ){
         return e
     }
-    if(Math.abs(v) >= 10 && 19.999 > Math.abs(v)){
+    else if(Math.abs(v) >= 10 && 19.999 > Math.abs(v)){
         return e + e
     }
-    if(Math.abs(v > 20))
+    else if(Math.abs(v > 20))
         return e + e + "🔥"
+    else
+        return "UNKNOWN"
 }
 
 function bittrextStringParse(tickerData){
@@ -201,6 +289,12 @@ function bittrextStringParse(tickerData){
             usdChange = commonUtil.getChange(tickerData.Last, tickerData.PrevDay,2)
 
         }
+        else if (key ==="BITCNY"){
+            let cny_rate = yahoo.getRate()['USD_CNY']
+            lastUSD = " $" + isNaN(parseFloat(tickerData.Last * cny_rate).toFixed(4)) ? '??' : parseFloat(tickerData.Last * cny_rate).toFixed(4)
+            prevUSD = " $" + isNaN(parseFloat(tickerData.PrevDay * cny_rate).toFixed(4)) ? '??' : parseFloat(tickerData.PrevDay * cny_rate).toFixed(4)
+            usdChange = "???"
+        }
 
 
 
@@ -212,7 +306,6 @@ function bittrextStringParse(tickerData){
         }
 
         let usdChangeText;
-        // let usdChange = parseFloat(lastUSD / prevUSD).toFixed(4)
         if(usdChange < 0.0){
             usdChangeText = "USD Change: <b>" +usdChange+ "%</b>" +getHowManyEmoji("😭", usdChange) +"\r\n"
         }else{
@@ -260,7 +353,7 @@ let last_koreanPremium = {
     }
 }
 function calcKoreanPremium(){
-    let usd_krw_rate = yahoo.getRate()
+    let usd_krw_rate = yahoo.getRate()["USD_KRW"].last
 
     let bittrex_market_summary = bittrex.getMarketSummary()
     let bithumb_ticker = bithumb.getTicker()
