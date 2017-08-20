@@ -398,7 +398,7 @@ function defaultKeyboard(chatId) {
     bot.sendMessage(chatId, "What can I do for you? Stay a while and listen.", {
         "reply_markup": {
             "keyboard": [
-                ["CAP","USDT-ETH", "USDT-BTC"],
+                ["TOP", "CAP","USDT-ETH", "USDT-BTC"],
                 ["ETH-BAT", "ETH-SNT","ETH-OMG"],
                 ["코빗","빗썸","김프","POLO"],["BITTREX"],["ALARM"]]
         }
@@ -419,6 +419,13 @@ bot.onText(/\ALARM/,(msg) => {
         }
     });
 })
+function getChange(m) {
+    return {
+        MarketName: m.MarketName,
+        Change: (m.Last / m.PrevDay * 100 - 100).toFixed(2)
+    }
+}
+
 
 
 bot.on('message', (msg) => {
@@ -440,6 +447,19 @@ bot.on('message', (msg) => {
     }
 
     switch(msg.text) {
+        case 'TOP' :{
+            let top = _.take(_.sortBy(_.map(bittrex.getMarketSummary(), getChange), (a, b) => {
+                return parseFloat(a.Change)
+            }).reverse(), 10)
+            let bottom = _.take(_.sortBy(_.map(bittrex.getMarketSummary(), getChange), (a, b) => {
+                return parseFloat(a.Change)
+            }), 10)
+
+            let m = top.map(m => `MarketName: ${m.MarketName} Change: ${m.Change}%`).join('\r\n')
+            let b = bottom.map(m => `MarketName: ${m.MarketName} Change: ${m.Change}%`).join('\r\n')
+            bot.sendMessage(msg.chat.id, "<b>Bittrex Top 10 Change 🔥</b> \r\n".concat(m) + "\r\n==\r\n".concat(b),{parse_mode:"HTML"})
+            break;
+        }
         case 'Cancel': {
             defaultKeyboard(msg.chat.id)
             return
