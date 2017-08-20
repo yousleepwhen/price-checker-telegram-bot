@@ -72,18 +72,31 @@ const poloniex = new Poloniex()
 poloniex.run(5000)
 
 const yahoo = new Yahoo()
-yahoo.run(5000)
+yahoo.run(10000)
 
 const bithumb = new Bithumb()
 bithumb.run(5000)
 
-const Predicate = function(type, comparator ,value){
-    if(!(this instanceof Predicate)) return new Alarm(type, comparator, value)
+const Predicate = function(type, comparator ,value, market, coin){
+    if(!(this instanceof Predicate)) return new Alarm(type, comparator, value, market, coin)
 
     this.type = type
     this.comparator = comparator
     this.value = value
 
+    this.market = market
+    this.coin = coin
+
+    this.getMarketTitle = function(){
+        return this.market + "-" + this.coin
+    }
+    this.getString = function(){
+        if(this.type === "KrwPremium"){
+            return `Type: ${this.type} \r\n Compare: ${this.comparator} \r\n Value: ${this.value}`
+        } else {
+            return `Type: ${this.type} \r\n Market: ${this.market}-${this.coin} \r\n Compare: ${this.comparator} \r\n Value: ${this.value}`
+        }
+    }
     this.check = function(){
         if(this.type === "KrwPremium"){
             calcKoreanPremium()
@@ -104,7 +117,16 @@ const Predicate = function(type, comparator ,value){
             } else return false
 
         } else if(this.type === "Market"){
-            //todo market ticker alarm
+            let m = bittrex.getMarketSummary().filter((m) => m.MarketName === this.market + '-' + this.coin)[0]
+            if(this.comparator.toUpperCase() === "GREATER"){
+                if(parseFloat(m.Last,10) > this.value ){
+                    return true
+                }
+            } else{
+                if(parseFloat(m.Last,10) < this.value ){
+                    return true
+                }
+            }
 
         }
     }
@@ -112,7 +134,6 @@ const Predicate = function(type, comparator ,value){
 
 const Alarm = function(owner, chatId, predicate, freq){
     if(!(this instanceof Alarm)) return new Alarm(owner, chatId, predicate, freq)
-
     this.owner = owner;
     this.chatId = chatId;
     this.predicate = predicate
@@ -124,7 +145,16 @@ const Alarm = function(owner, chatId, predicate, freq){
                 "🔥🔥🔥🔥🔥🔥🔥\r\n" + calcKoreanPremium() + "\r\n" +
                 "🔥🔥🔥🔥🔥🔥🔥", {parse_mode : "HTML"})
 
+        } else if (this.predicate.type === "Market"){
+
+            let mName = this.predicate.getMarketTitle()
+            let m = bittrextStringParse(_.find(bittrex.getMarketSummary(), {'MarketName':mName}))
+            bot.sendMessage(this.chatId,"<b>Price Alert by " + this.owner + "</b>\r\n" +
+                "".concat(m), {parse_mode : "HTML"})
         }
+    }
+    this.getString = function(){
+        return `Owner: ${this.owner} \r\n`.concat(this.predicate.getString())
     }
 }
 let current_alarm_processing;
@@ -158,15 +188,66 @@ bot.onText(/\/echo (.+)/, (msg, match) => {
     bot.sendMessage(chatId, resp);
 });
 
+bot.onText(/\add (.+)/,(msg, match) => {
+    console.log(msg)
+    let order = match[1].split('-')
+    if(order.length < 4){
+        return
+    }
+
+    console.log(order)
+    let markets = new Set(bittrex.getMarkets().map((m) => m.MarketName).map(m => m.match(/[A-Z]*[^-;]/).toString()))
+
+    if(!markets.has(order[0].toString().toUpperCase())){
+        console.log('no market')
+        bot.sendMessage(msg.chat.id, "No Market \r\n" + "Bittrex Market: " + new Array(...markets).join(' '))
+        return
+    }
+    let market = order[0].toUpperCase()
+    let summary = bittrex.getMarketSummary().filter((m) => m.MarketName === market.toUpperCase() + '-' + order[1].toString().toUpperCase())
+
+    console.log(market + '-' + order[1].toString().toUpperCase())
+    if(summary.length < 1){
+        console.log('no market')
+        bot.sendMessage(msg.chat.id, "Unknown Coin \r\n")
+        return
+    }
+
+    let type = order[2].toString().toUpperCase()
+    console.log(type)
+    if (!(type === "GREATER" || type === "LESS")) {
+        console.log('unknown compare')
+        bot.sendMessage(msg.chat.id, "Unknown Compare \r\n")
+        return
+    }
+
+    let v = parseFloat(order[3],10)
+    if(isNaN(v)){
+        console.log('unknown value')
+        bot.sendMessage(msg.chat.id, "Unknown Value. Must be float value. \r\n")
+        return
+    }
+
+
+    let predicate = new Predicate("Market", type, v, market, order[1].toString().toUpperCase() )
+    let alarm = new Alarm(msg.from.first_name + msg.from.last_name, msg.chat.id, predicate, 1)
+
+    alarms.push(alarm)
+    bot.sendMessage(msg.chat.id, 'Alarm Saved! Total Alarm Count:' + alarms.length)
+
+})
+
 function getHowManyEmoji(e, v){
     if(Math.abs(v) >= 0 && 9.999 > Math.abs(v) ){
         return e
     }
-    if(Math.abs(v) >= 10 && 19.999 > Math.abs(v)){
+    else if(Math.abs(v) >= 10 && 19.999 > Math.abs(v)){
         return e + e
     }
-    if(Math.abs(v > 20))
+    else if(Math.abs(v > 20))
         return e + e + "🔥"
+    else
+        return "UNKNOWN"
 }
 
 function bittrextStringParse(tickerData){
@@ -190,16 +271,23 @@ function bittrextStringParse(tickerData){
 
             usdChange = commonUtil.getChange(tickerData.Last * usdt_btc_market.Last, tickerData.PrevDay * usdt_btc_market.PrevDay, 2)
         }
-        if(key==="ETH"){
+        else if(key==="ETH"){
             lastUSD = " $" + (parseFloat(tickerData.Last) * usdt_eth_market.Last).toFixed(4)
             prevUSD = " $" + (parseFloat(tickerData.PrevDay) * usdt_eth_market.PrevDay).toFixed(4)
             usdChange = commonUtil.getChange(parseFloat(tickerData.Last) * usdt_eth_market.Last,parseFloat(tickerData.PrevDay)* usdt_eth_market.PrevDay ,2)
         }
-        if(key==="USDT"){
+        else if(key==="USDT"){
             lastUSD =" $" + parseFloat(tickerData.Last).toFixed(4)
             prevUSD =" $" + parseFloat(tickerData.PrevDay).toFixed(4)
             usdChange = commonUtil.getChange(tickerData.Last, tickerData.PrevDay,2)
 
+        }
+        else if (key ==="BITCNY"){
+            let cny_rate = yahoo.getRate()['CNY_USD'].last
+            // console.log(tickerData.Last * cny_rate)
+            lastUSD = " $" + parseFloat(tickerData.Last * cny_rate).toFixed(4)
+            prevUSD = " $" + parseFloat(tickerData.PrevDay * cny_rate).toFixed(4)
+            usdChange = "???"
         }
 
 
@@ -212,7 +300,6 @@ function bittrextStringParse(tickerData){
         }
 
         let usdChangeText;
-        // let usdChange = parseFloat(lastUSD / prevUSD).toFixed(4)
         if(usdChange < 0.0){
             usdChangeText = "USD Change: <b>" +usdChange+ "%</b>" +getHowManyEmoji("😭", usdChange) +"\r\n"
         }else{
@@ -260,7 +347,7 @@ let last_koreanPremium = {
     }
 }
 function calcKoreanPremium(){
-    let usd_krw_rate = yahoo.getRate()
+    let usd_krw_rate = yahoo.getRate()["USD_KRW"].last
 
     let bittrex_market_summary = bittrex.getMarketSummary()
     let bithumb_ticker = bithumb.getTicker()
@@ -311,9 +398,9 @@ function defaultKeyboard(chatId) {
     bot.sendMessage(chatId, "What can I do for you? Stay a while and listen.", {
         "reply_markup": {
             "keyboard": [
-                ["CAP","USDT-ETH", "USDT-BTC"],
+                ["TOP", "CAP","USDT-ETH", "USDT-BTC"],
                 ["ETH-BAT", "ETH-SNT","ETH-OMG"],
-                ["코빗","빗썸","김프","POLO"],["BITTREX"]]
+                ["코빗","빗썸","김프","POLO"],["BITTREX"],["ALARM"]]
         }
     });
 }
@@ -322,16 +409,23 @@ bot.onText(/\/start/, (msg) => {
     defaultKeyboard(msg.chat.id)
 });
 
-bot.onText(/\alarm/,(msg) => {
+bot.onText(/\ALARM/,(msg) => {
     bot.sendMessage(msg.chat.id, "What do you want?", {
         "reply_markup": {
             "keyboard": [
                 ["AlarmList"],
-                ["AddAlarm", "RemoveAlarm"],
+                ["AddAlarm"],
                 ["Cancel"]]
         }
     });
 })
+function getChange(m) {
+    return {
+        MarketName: m.MarketName,
+        Change: (m.Last / m.PrevDay * 100 - 100).toFixed(2)
+    }
+}
+
 
 
 bot.on('message', (msg) => {
@@ -353,6 +447,19 @@ bot.on('message', (msg) => {
     }
 
     switch(msg.text) {
+        case 'TOP' :{
+            let top = _.take(_.sortBy(_.map(bittrex.getMarketSummary(), getChange), (a, b) => {
+                return parseFloat(a.Change)
+            }).reverse(), 10)
+            let bottom = _.take(_.sortBy(_.map(bittrex.getMarketSummary(), getChange), (a, b) => {
+                return parseFloat(a.Change)
+            }), 10)
+
+            let m = top.map(m => `MarketName: ${m.MarketName} Change: ${m.Change}%`).join('\r\n')
+            let b = bottom.map(m => `MarketName: ${m.MarketName} Change: ${m.Change}%`).join('\r\n')
+            bot.sendMessage(msg.chat.id, "<b>Bittrex Top 10 Change 🔥</b> \r\n".concat(m) + "\r\n==\r\n".concat(b),{parse_mode:"HTML"})
+            break;
+        }
         case 'Cancel': {
             defaultKeyboard(msg.chat.id)
             return
@@ -407,11 +514,9 @@ bot.on('message', (msg) => {
             return
         }
         case 'AlarmList': {
-            bot.sendMessage(chatId,"test")
+            let m = alarms.length > 0 ? alarms.map((a) => a.getString()).join('\r\n\r\n') : 'Alarm List Empty'
 
-            _.each(alarms, alarm => console.log(alarm.owner))
-
-            // bot.sendMessage(chatId, alarms[0]['owner'])
+            bot.sendMessage(chatId, m)
             return
         }
         case 'AddAlarm': {
@@ -419,7 +524,6 @@ bot.on('message', (msg) => {
                 "reply_markup": {
                     "keyboard": [
                         ["KrwPremium"],
-                        ["Market"],
                         ["BackToAlarm","Cancel"]]
                 }
             })
@@ -430,7 +534,7 @@ bot.on('message', (msg) => {
                 "reply_markup": {
                     "keyboard": [
                         ["AlarmList"],
-                        ["AddAlarm", "RemoveAlarm"],
+                        ["AddAlarm"],
                         ["Cancel"]]
                 }
             })
