@@ -16,12 +16,17 @@
 #### # 배포 또는 실행 후 해당 텔레그램 봇 또는 텔레그램 봇이 있는 그룹 채팅에서
     /start
 
+#### # Bittrex Last Price Alarm 사용
+    /add [Market]-[Coin]-[Compare]-[Value]
+    /add eth-snt-greater-0.000175 (ETH마켓의 Status Network Token(SNT)의 가격이 0.000175 이상일 경우)
+    
 ### Todo
 - [x] Bittrex
 - [x] Korbit
 - [x] Bithumb
 - [x] Korean Premium
-- [ ] Poloniex
-- [ ] Alarm
+- [x] Poloniex
+- [x] Alarm
+- [x] CoinmarketCap Screenshot => /shot
 
 
