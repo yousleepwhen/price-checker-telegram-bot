@@ -218,7 +218,7 @@ bot.onText(/\add (.+)/,(msg, match) => {
     }
 
     let v = parseFloat(order[3],10)
-    if(!_.isNumber(v)){
+    if(isNaN(v)){
         console.log('unknown value')
         bot.sendMessage(msg.chat.id, "Unknown Value. Must be float value. \r\n")
         return
