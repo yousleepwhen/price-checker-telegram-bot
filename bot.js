@@ -15,7 +15,7 @@ const Bithumb = require('./exchange/bithumb').Bithumb
 if(!process.env.TELEGRAM_BOT_TOKEN){
     throw "Telegram bot token missing"
 }
-//
+
 const token = process.env.TELEGRAM_BOT_TOKEN
 // const token = '414024453:AAHQg3QrU-_WG77FHUyB9WIuTYKJXl_l10E' //production
 // const token = '433274725:AAEb_5Mv6r23atBuYG42iib0Ma7011mx4e8' //dev
@@ -90,7 +90,13 @@ const Predicate = function(type, comparator ,value, market, coin){
     this.getMarketTitle = function(){
         return this.market + "-" + this.coin
     }
-
+    this.getString = function(){
+        if(this.type === "KrwPremium"){
+            return `Type: ${this.type} \r\n Compare: ${this.comparator} \r\n Value: ${this.value}`
+        } else {
+            return `Type: ${this.type} \r\n Market: ${this.market}-${this.coin} \r\n Compare: ${this.comparator} \r\n Value: ${this.value}`
+        }
+    }
     this.check = function(){
         if(this.type === "KrwPremium"){
             calcKoreanPremium()
@@ -111,10 +117,7 @@ const Predicate = function(type, comparator ,value, market, coin){
             } else return false
 
         } else if(this.type === "Market"){
-            //todo market ticker alarm
-            console.log(this.market + '-' + this.coin)
             let m = bittrex.getMarketSummary().filter((m) => m.MarketName === this.market + '-' + this.coin)[0]
-            // console.log(m)
             if(this.comparator.toUpperCase() === "GREATER"){
                 if(parseFloat(m.Last,10) > this.value ){
                     return true
@@ -131,7 +134,6 @@ const Predicate = function(type, comparator ,value, market, coin){
 
 const Alarm = function(owner, chatId, predicate, freq){
     if(!(this instanceof Alarm)) return new Alarm(owner, chatId, predicate, freq)
-
     this.owner = owner;
     this.chatId = chatId;
     this.predicate = predicate
@@ -150,6 +152,9 @@ const Alarm = function(owner, chatId, predicate, freq){
             bot.sendMessage(this.chatId,"<b>Price Alert by " + this.owner + "</b>\r\n" +
                 "".concat(m), {parse_mode : "HTML"})
         }
+    }
+    this.getString = function(){
+        return `Owner: ${this.owner} \r\n`.concat(this.predicate.getString())
     }
 }
 let current_alarm_processing;
@@ -193,7 +198,6 @@ bot.onText(/\add (.+)/,(msg, match) => {
     console.log(order)
     let markets = new Set(bittrex.getMarkets().map((m) => m.MarketName).map(m => m.match(/[A-Z]*[^-;]/).toString()))
 
-    // console.log(markets.has("ETH"))
     if(!markets.has(order[0].toString().toUpperCase())){
         console.log('no market')
         bot.sendMessage(msg.chat.id, "No Market \r\n" + "Bittrex Market: " + new Array(...markets).join(' '))
@@ -230,17 +234,6 @@ bot.onText(/\add (.+)/,(msg, match) => {
 
     alarms.push(alarm)
     bot.sendMessage(msg.chat.id, 'Alarm Saved! Total Alarm Count:' + alarms.length)
-
-
-    console.log(summary)
-
-    // console.log(_.map(bittrex.getMarkets(), 'MarketName').map())
-
-    console.log(markets)
-
-
-    // markets.has()
-    // console.log(bittrex.getMarkets().map((m) => m.MarketName).map(m => m.match(/\[A-Z]*[^-;]/)))
 
 })
 
@@ -406,7 +399,7 @@ function defaultKeyboard(chatId) {
             "keyboard": [
                 ["CAP","USDT-ETH", "USDT-BTC"],
                 ["ETH-BAT", "ETH-SNT","ETH-OMG"],
-                ["코빗","빗썸","김프","POLO"],["BITTREX"]]
+                ["코빗","빗썸","김프","POLO"],["BITTREX"],["ALARM"]]
         }
     });
 }
@@ -415,12 +408,12 @@ bot.onText(/\/start/, (msg) => {
     defaultKeyboard(msg.chat.id)
 });
 
-bot.onText(/\alarm/,(msg) => {
+bot.onText(/\ALARM/,(msg) => {
     bot.sendMessage(msg.chat.id, "What do you want?", {
         "reply_markup": {
             "keyboard": [
                 ["AlarmList"],
-                ["AddAlarm", "RemoveAlarm"],
+                ["AddAlarm"],
                 ["Cancel"]]
         }
     });
@@ -500,11 +493,9 @@ bot.on('message', (msg) => {
             return
         }
         case 'AlarmList': {
-            bot.sendMessage(chatId,"test")
+            let m = alarms.length > 0 ? alarms.map((a) => a.getString()).join('\r\n\r\n') : 'Alarm List Empty'
 
-            _.each(alarms, alarm => console.log(alarm.owner))
-
-            // bot.sendMessage(chatId, alarms[0]['owner'])
+            bot.sendMessage(chatId, m)
             return
         }
         case 'AddAlarm': {
@@ -512,7 +503,6 @@ bot.on('message', (msg) => {
                 "reply_markup": {
                     "keyboard": [
                         ["KrwPremium"],
-                        ["Market"],
                         ["BackToAlarm","Cancel"]]
                 }
             })
@@ -523,7 +513,7 @@ bot.on('message', (msg) => {
                 "reply_markup": {
                     "keyboard": [
                         ["AlarmList"],
-                        ["AddAlarm", "RemoveAlarm"],
+                        ["AddAlarm"],
                         ["Cancel"]]
                 }
             })
