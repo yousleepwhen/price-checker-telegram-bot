@@ -271,21 +271,22 @@ function bittrextStringParse(tickerData){
 
             usdChange = commonUtil.getChange(tickerData.Last * usdt_btc_market.Last, tickerData.PrevDay * usdt_btc_market.PrevDay, 2)
         }
-        if(key==="ETH"){
+        else if(key==="ETH"){
             lastUSD = " $" + (parseFloat(tickerData.Last) * usdt_eth_market.Last).toFixed(4)
             prevUSD = " $" + (parseFloat(tickerData.PrevDay) * usdt_eth_market.PrevDay).toFixed(4)
             usdChange = commonUtil.getChange(parseFloat(tickerData.Last) * usdt_eth_market.Last,parseFloat(tickerData.PrevDay)* usdt_eth_market.PrevDay ,2)
         }
-        if(key==="USDT"){
+        else if(key==="USDT"){
             lastUSD =" $" + parseFloat(tickerData.Last).toFixed(4)
             prevUSD =" $" + parseFloat(tickerData.PrevDay).toFixed(4)
             usdChange = commonUtil.getChange(tickerData.Last, tickerData.PrevDay,2)
 
         }
         else if (key ==="BITCNY"){
-            let cny_rate = yahoo.getRate()['USD_CNY']
-            lastUSD = " $" + isNaN(parseFloat(tickerData.Last * cny_rate).toFixed(4)) ? '??' : parseFloat(tickerData.Last * cny_rate).toFixed(4)
-            prevUSD = " $" + isNaN(parseFloat(tickerData.PrevDay * cny_rate).toFixed(4)) ? '??' : parseFloat(tickerData.PrevDay * cny_rate).toFixed(4)
+            let cny_rate = yahoo.getRate()['CNY_USD'].last
+            // console.log(tickerData.Last * cny_rate)
+            lastUSD = " $" + parseFloat(tickerData.Last * cny_rate).toFixed(4)
+            prevUSD = " $" + parseFloat(tickerData.PrevDay * cny_rate).toFixed(4)
             usdChange = "???"
         }
 
