@@ -12,7 +12,7 @@ const Poloniex = require('./exchange/poloniex').Poloniex
 const Yahoo = require("./exchange/yahoo").Yahoo
 const Bithumb = require('./exchange/bithumb').Bithumb
 //
-if(!process.env.TELEGRAM_BOT_TOKEN){
+if(!process.env.TELEGRAM_BOT_TOKEN ){
     throw "Telegram bot token missing"
 }
 
@@ -63,7 +63,7 @@ const bittrex = new Bittrex()
 bittrex.run(5000)
 
 const korbit = new Korbit()
-korbit.run(5000)
+korbit.run(10000)
 
 const coinMarketCap = new CoinMarketCap()
 coinMarketCap.run(5000)
@@ -119,7 +119,7 @@ const Predicate = function(type, comparator ,value, market, coin){
         } else if(this.type === "Market"){
             let m = bittrex.getMarketSummary().filter((m) => m.MarketName === this.market + '-' + this.coin)[0]
             if(this.comparator.toUpperCase() === "GREATER"){
-                if(parseFloat(m.Last,10) > this.value ){
+                if(parseFloat(m.Last,10) >= this.value ){
                     return true
                 }
             } else{
@@ -129,6 +129,7 @@ const Predicate = function(type, comparator ,value, market, coin){
             }
 
         }
+        return false
     }
 }
 
@@ -149,8 +150,7 @@ const Alarm = function(owner, chatId, predicate, freq){
 
             let mName = this.predicate.getMarketTitle()
             let m = bittrextStringParse(_.find(bittrex.getMarketSummary(), {'MarketName':mName}))
-            bot.sendMessage(this.chatId,"<b>Price Alert by " + this.owner + "</b>\r\n" +
-                "".concat(m), {parse_mode : "HTML"})
+            bot.sendMessage(this.chatId,`<b>Price Alert by ${this.owner} ${this.predicate.getString()}</b>\r\n`.concat(m), {parse_mode : "HTML"})
         }
     }
     this.getString = function(){
@@ -170,6 +170,8 @@ setInterval(() => {
         if(alarm.predicate.check()){
             alarm.pop()
             alarms.splice(idx,1)
+            console.log('Alarm Pop!')
+            console.log(alarm.getString())
         }
     })
 }, 10000)
@@ -244,7 +246,7 @@ function getHowManyEmoji(e, v){
     else if(Math.abs(v) >= 10 && 19.999 > Math.abs(v)){
         return e + e
     }
-    else if(Math.abs(v > 20))
+    else if(Math.abs(v) > 20.0)
         return e + e + "🔥"
     else
         return "UNKNOWN"
@@ -332,7 +334,6 @@ function bittrextStringParse(tickerData){
     } else {
         return "Can not find market"
     }
-
 }
 
 let last_koreanPremium = {
@@ -462,7 +463,7 @@ bot.on('message', (msg) => {
         }
         case 'Cancel': {
             defaultKeyboard(msg.chat.id)
-            return
+            break
         }
         case 'BITTREX': {
             let arr = _.sortBy(bittrex.getMarketSummary(),(market) => parseFloat(market.Last))
@@ -475,7 +476,7 @@ bot.on('message', (msg) => {
 
                 }
             })
-            return
+            break
         }
         case 'Equal':
         case 'Greater':
@@ -490,7 +491,7 @@ bot.on('message', (msg) => {
                         ["BackToAlarm", "Cancel"]]
                 }
             })
-            return
+            break
         }
         case 'SaveAlarm':{
             let predicate = new Predicate(current_alarm_type, current_alarm_comparator, current_alarm_value)
@@ -500,7 +501,7 @@ bot.on('message', (msg) => {
             bot.sendMessage(chatId, 'Alarm Saved! Total Alarm Count:' + alarms.length)
 
             defaultKeyboard(msg.chat.id)
-            return
+            break
         }
         case 'KrwPremium': {
             current_alarm_type = "KrwPremium"
@@ -511,13 +512,13 @@ bot.on('message', (msg) => {
                         ["BackToAlarm", "Cancel"]]
                 }
             })
-            return
+            break
         }
         case 'AlarmList': {
             let m = alarms.length > 0 ? alarms.map((a) => a.getString()).join('\r\n\r\n') : 'Alarm List Empty'
 
             bot.sendMessage(chatId, m)
-            return
+            break
         }
         case 'AddAlarm': {
             bot.sendMessage(msg.chat.id, "Which Type?", {
@@ -527,7 +528,7 @@ bot.on('message', (msg) => {
                         ["BackToAlarm","Cancel"]]
                 }
             })
-            return
+            break
         }
         case 'BackToAlarm': {
             bot.sendMessage(msg.chat.id, "What do you want?", {
@@ -538,7 +539,7 @@ bot.on('message', (msg) => {
                         ["Cancel"]]
                 }
             })
-            return
+            break
         }
         case '/korbit':
         case '/코빗':
@@ -549,19 +550,19 @@ bot.on('message', (msg) => {
             })
 
             bot.sendMessage(chatId, strArr.join("\r\n"))
-            return
+            break
         }
         case 'COINONE':
         case '코인원': {
-            return
+            break
         }
         case 'POLO':{
             let ticker = poloniex.getTicker()
             let usdtTickerKey = _.filter(Object.keys(ticker), (t) =>  t.match(/^USDT_[a-z0-9A-Z]{3,6}$/))
-
-            let strArr = _.map(usdtTickerKey, (key) => "Poloniex " + key +": $" + parseFloat(ticker[key].last).toFixed(2))
+            let usdtTickers = _.sortBy(_.map(usdtTickerKey, (key) => {return {'name':key, 'ticker': ticker[key]}}), (m) => parseFloat(m.ticker.last,3)).reverse()
+            let strArr = _.map(usdtTickers, (m) => `Poloniex ${m.name}: $${parseFloat(m.ticker.last,10).toFixed(3)} Change: ${(parseFloat(m.ticker.percentChange,10) * 100).toFixed(4)}%`)
             bot.sendMessage(chatId, strArr.join("\r\n"))
-            return
+            break
         }
         case '/shot' :{
             if(!webshot_access){
@@ -571,21 +572,18 @@ bot.on('message', (msg) => {
                     webshot_access = false
                 })
             }
-
-            return
-
+            break
         }
         case '빗썸': {
             let bithumb_ticker = bithumb.getTicker()
             let keys = Object.keys(_.omit(bithumb_ticker,'date'))// date??
             let strArr = _.map(keys, (key) => "Bithumb KRW-"+ key + ": ￦" + commonUtil.numberWithCommas(bithumb_ticker[key].last))
             bot.sendMessage(chatId, strArr.join("\r\n"))
-            return
+            break
         }
         case '김프': {
-            bot.sendPhoto(chatId,'google.png');
             bot.sendMessage(chatId, calcKoreanPremium(), {parse_mode : "HTML"})
-            return
+            break
         }
         case 'CAP':{
             let marketCap = commonUtil.numberWithCommas(coinMarketCap.getSummary().total_market_cap_usd)
@@ -595,13 +593,14 @@ bot.on('message', (msg) => {
                 "BTC Dominance: " + bitPercentage + "%"
 
             bot.sendMessage(chatId, m)
-            return
+            break
         }
         default :{
 
             let market = _.find(bittrex.getMarkets(),{'MarketName':msg.text.replace('/','').toUpperCase()})
-            if(market === undefined)
-                return;
+            if(market === undefined){
+                break
+            }
             if(market.LogoUrl !== null){
                 bot.sendPhoto(chatId,market.LogoUrl);
             }
@@ -612,9 +611,10 @@ bot.on('message', (msg) => {
             bot.sendMessage(chatId, returnMsg,{parse_mode : "HTML"})
 
             defaultKeyboard(msg.chat.id)
-            return
+            break
         }
     }
-
-
 });
+
+module.exports.bittrexMarketParse = bittrextStringParse
+module.exports.calcKoreanPremium = calcKoreanPremium

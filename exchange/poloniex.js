@@ -1,4 +1,4 @@
-const request = require('request')
+const axios = require('axios')
 
 const Poloniex = function(){
     if(!(this instanceof Poloniex)) return new Poloniex()
@@ -8,13 +8,15 @@ const Poloniex = function(){
     let timer
 
     this.get_poloniex_ticker = function(){
-        request('https://poloniex.com/public?command=returnTicker', function (error, response, body) {
-            if (!error && response.statusCode == 200) {
-                let data = JSON.parse(body)
-                ticker = data
-                markets = Object.keys(data)
-            }
-        })
+
+        axios.get('https://poloniex.com/public?command=returnTicker')
+            .then((r) => {
+                if(r.status == 200){
+                    global_market_summary = r.data
+                    ticker = r.data
+                    markets = Object.keys(r.data)
+                }
+            }).catch(err => console.log(err))
     }
     this.run = function(interval){
         if(timer !== undefined){

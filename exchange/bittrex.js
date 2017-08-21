@@ -1,6 +1,4 @@
-const request = require('request')
-const _ = require('lodash')
-
+const axios = require('axios')
 const Bittrex = function() {
     if(!(this instanceof Bittrex)) return new Bittrex()
 
@@ -10,18 +8,22 @@ const Bittrex = function() {
     let timer
 
     this.get_bittrex_market_summary = function(){
-        request('https://bittrex.com/api/v1.1/public/getmarketsummaries', function (error, response, body) {
-            if (!error && response.statusCode == 200) {
-                market_summary = JSON.parse(body).result
-            }
-        })
+
+        axios.get('https://bittrex.com/api/v1.1/public/getmarketsummaries')
+            .then((r) => {
+                if(r.status == 200){
+                    market_summary = r.data.result
+                }
+            }).catch(err => console.log(err))
     }
     this.get_bittrex_market_info = function(){
-        request('https://bittrex.com/api/v1.1/public/getmarkets', function (error, response, body) {
-            if (!error && response.statusCode == 200) {
-                market_info = JSON.parse(body).result
-            }
-        })
+
+        axios.get('https://bittrex.com/api/v1.1/public/getmarkets')
+            .then((r) => {
+                if(r.status == 200){
+                    market_info = r.data.result
+                }
+            }).catch(err => console.log(err))
     }
     this.run = function(interval){
         if(timer !== undefined){
