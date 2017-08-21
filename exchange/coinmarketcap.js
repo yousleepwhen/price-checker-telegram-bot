@@ -1,4 +1,4 @@
-const request = require('request')
+const axios = require('axios')
 
 const CoinMarketCap = function(){
     if(!(this instanceof CoinMarketCap)) return new CoinMarketCap()
@@ -7,12 +7,12 @@ const CoinMarketCap = function(){
     let timer
 
     this.get_coinmarketcap_global_data = function(){
-        request('https://api.coinmarketcap.com/v1/global/', function (error, response, body) {
-            if (!error && response.statusCode == 200) {
-                global_market_summary = JSON.parse(body)
-                // console.log(global_market_summary)
-            }
-        })
+        axios.get('https://api.coinmarketcap.com/v1/global/')
+            .then((r) => {
+                if(r.status == 200){
+                    global_market_summary = r.data
+                }
+            }).catch(err => console.log(err))
     }
     this.run = function(interval){
         if(timer !== undefined){

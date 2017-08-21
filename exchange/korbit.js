@@ -1,5 +1,5 @@
-const request = require('request')
 const _ = require('lodash')
+const axios = require('axios')
 
 const Korbit = function() {
     if(!(this instanceof Korbit)) return new Korbit()
@@ -25,12 +25,12 @@ const Korbit = function() {
     let timer
 
     const get_korbit_ticker = function(key){
-        // console.log(name)
-        request('https://api.korbit.co.kr/v1/ticker?currency_pair='+ key +'_krw', function (error, response, body) {
-            if (!error && response.statusCode == 200) {
-                market_summary[key] = Object.assign(market_summary[key], JSON.parse(body))
-            }
-        })
+        axios.get('https://api.korbit.co.kr/v1/ticker?currency_pair='+ key +'_krw')
+            .then((r) => {
+                if(r.status == 200){
+                    market_summary[key] = Object.assign(market_summary[key], r.data)
+                }
+            }).catch(err => console.log(err))
     }
 
 

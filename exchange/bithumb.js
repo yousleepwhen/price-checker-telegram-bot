@@ -1,5 +1,5 @@
-const request = require('request')
 const _ = require('lodash')
+const axios = require('axios')
 
 const Bithumb = function(){
     if(!(this instanceof Bithumb)) return new Bithumb()
@@ -13,12 +13,13 @@ const Bithumb = function(){
     }
 
     this.get_bithumb_ticker = function(){
-        request('https://api.bithumb.com/public/ticker/ALL', function (error, response, body) {
-            if (!error && response.statusCode == 200) {
-                // console.log(body) // Print the google web page.
-                ticker = bithum_ticker_parse(JSON.parse(body).data)
-            }
-        })
+
+        axios.get('https://api.bithumb.com/public/ticker/ALL')
+            .then((r) => {
+                if(r.status == 200){
+                    ticker = bithum_ticker_parse(r.data.data)
+                }
+            }).catch(err => console.log(err))
     }
     this.run = function(interval){
         if(timer !== undefined){
