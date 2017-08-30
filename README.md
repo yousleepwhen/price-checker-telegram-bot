@@ -27,7 +27,8 @@
 - [x] Korbit
 - [x] Bithumb
 - [x] Korean Premium
-- [x] Poloniex
+- [x] Coinone
+- [x] Poloniex (only usdt market)
 - [x] Alarm
 - [x] CoinmarketCap Screenshot => /shot
 
