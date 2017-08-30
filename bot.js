@@ -5,20 +5,14 @@ const _ = require('lodash')
 const TelegramBot = require('node-telegram-bot-api');
 const appConfig = require('./config/config.json')
 
-const Bittrex = require('./exchange/bittrex').Bittrex
-const Korbit = require('./exchange/korbit').Korbit
-const CoinMarketCap = require('./exchange/coinmarketcap').CoinMarketCap
-const Poloniex = require('./exchange/poloniex').Poloniex
-const Yahoo = require("./exchange/yahoo").Yahoo
-const Bithumb = require('./exchange/bithumb').Bithumb
-//
+const exchanges = require('./exchange')
+
 if(!process.env.TELEGRAM_BOT_TOKEN ){
     throw "Telegram bot token missing"
 }
 
 const token = process.env.TELEGRAM_BOT_TOKEN
-// const token = '414024453:AAHQg3QrU-_WG77FHUyB9WIuTYKJXl_l10E' //production
-// const token = '433274725:AAEb_5Mv6r23atBuYG42iib0Ma7011mx4e8' //dev
+
 let webshot = require('webshot');
 let options = {
     windowSize:{
@@ -59,23 +53,27 @@ const Market = function(standard, name){
     this.name = name
 }
 
-const bittrex = new Bittrex()
+
+const bittrex = new exchanges.Bittrex()
 bittrex.run(5000)
 
-const korbit = new Korbit()
+const korbit = new exchanges.Korbit()
 korbit.run(10000)
 
-const coinMarketCap = new CoinMarketCap()
+const coinMarketCap = new exchanges.CoinMarketCap()
 coinMarketCap.run(5000)
 
-const poloniex = new Poloniex()
+const poloniex = new exchanges.Poloniex()
 poloniex.run(5000)
 
-const yahoo = new Yahoo()
+const yahoo = new exchanges.Yahoo()
 yahoo.run(10000)
 
-const bithumb = new Bithumb()
+const bithumb = new exchanges.Bithumb()
 bithumb.run(5000)
+
+const coinone = new exchanges.Coinone()
+coinone.run(5000)
 
 const Predicate = function(type, comparator ,value, market, coin){
     if(!(this instanceof Predicate)) return new Alarm(type, comparator, value, market, coin)
@@ -401,7 +399,7 @@ function defaultKeyboard(chatId) {
             "keyboard": [
                 ["TOP", "CAP","USDT-ETH", "USDT-BTC"],
                 ["ETH-BAT", "ETH-SNT","ETH-OMG"],
-                ["코빗","빗썸","김프","POLO"],["BITTREX"],["ALARM"]]
+                ["코빗","빗썸","코인원","김프"],["POLO"],["BITTREX"],["ALARM"]]
         }
     });
 }
@@ -554,6 +552,18 @@ bot.on('message', (msg) => {
         }
         case 'COINONE':
         case '코인원': {
+
+            let ticker = coinone.getTicker()
+            let keys = Object.keys(ticker)// date??
+            keys = new Set(keys)
+            keys.delete('result')
+            keys.delete('errorCode')
+            keys.delete('timestamp')
+            keys = Array.from(keys)
+
+            let strArr = _.map(keys, (key) => "CoinOne KRW-"+ key.toUpperCase() + ": ￦" + commonUtil.numberWithCommas(parseInt(ticker[key].last,10)))
+            bot.sendMessage(chatId, strArr.join("\r\n"))
+
             break
         }
         case 'POLO':{
@@ -577,7 +587,7 @@ bot.on('message', (msg) => {
         case '빗썸': {
             let bithumb_ticker = bithumb.getTicker()
             let keys = Object.keys(_.omit(bithumb_ticker,'date'))// date??
-            let strArr = _.map(keys, (key) => "Bithumb KRW-"+ key + ": ￦" + commonUtil.numberWithCommas(bithumb_ticker[key].last))
+            let strArr = _.map(keys, (key) => "Bithumb KRW-"+ key + ": ￦" + commonUtil.numberWithCommas(parseInt(bithumb_ticker[key].last,10)))
             bot.sendMessage(chatId, strArr.join("\r\n"))
             break
         }
