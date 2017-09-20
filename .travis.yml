@@ -1,0 +1,12 @@
+language: node_js
+  - 0.6
+  - 0.7
+  - 0.8
+
+install : "yarn install"
+
+script: npm run test
+
+branches:
+  only:
+    - master
