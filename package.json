@@ -11,6 +11,7 @@
   "license": "ISC",
   "dependencies": {
     "axios": "^0.16.2",
+    "expect": "^21.1.0",
     "lodash": "^4.17.4",
     "node-telegram-bot-api": "^0.27.1",
     "webshot": "^0.18.0"
