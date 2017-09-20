@@ -5,7 +5,8 @@
   "main": "bot.js",
   "scripts": {
     "start": "node bot.js",
-    "test": "node ./node_modules/.bin/mocha $(find ./test -name '*spec.js') --recursive -w"
+    "test": "node ./node_modules/.bin/mocha $(find ./test -name '*spec.js') --recursive",
+    "test_watch": "node ./node_modules/.bin/mocha $(find ./test -name '*spec.js') --recursive -w"
   },
   "author": "forsyphilis@gmail.com",
   "license": "ISC",
