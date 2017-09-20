@@ -1,5 +1,6 @@
 # price-checker-telegram-bot
-암호화폐 시세 조회 텔레그램 봇 / Telegram bot for cryptocurrency price 
+암호화폐 시세 조회 텔레그램 봇 / Telegram bot for cryptocurrency price   
+[![Coverage Status](https://coveralls.io/repos/github/forsyphilis/price-checker-telegram-bot/badge.svg?branch=development)](https://coveralls.io/github/forsyphilis/price-checker-telegram-bot?branch=development)
 
 #### # node 실행시 bot.js 의 Telegram bot token 을 직접 입력
     $ node bot.js
