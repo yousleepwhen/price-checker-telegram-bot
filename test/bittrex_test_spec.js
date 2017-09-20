@@ -1,5 +1,5 @@
 const expect = require('expect')
-const Bittrex = require('../exchange/Bittrex').Bittrex
+const Bittrex = require('../exchange/bittrex').Bittrex
 const assert = require('assert')
 const _ = require('lodash')
 const bittrex = new Bittrex()
@@ -19,7 +19,7 @@ describe('Bittrex Test', () => {
                 expect(f.length).toEqual(1)
                 resolve();
             },1500)
- 
+
         })
             .then();
     })

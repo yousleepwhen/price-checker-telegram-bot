@@ -1,7 +1,5 @@
 language: node_js
-  - 0.6
-  - 0.7
-  - 0.8
+  - "stable"
 
 install : "yarn install"
 
@@ -10,3 +8,8 @@ script: npm run test
 branches:
   only:
     - master
+    - development
+
+
+after_success:
+ - npm run coveralls
