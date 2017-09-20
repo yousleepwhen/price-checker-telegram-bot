@@ -1,5 +1,5 @@
 const expect = require('expect')
-const Poloniex = require('../exchange/Poloniex').Poloniex
+const Poloniex = require('../exchange/poloniex').Poloniex
 const assert = require('assert')
 const _ = require('lodash')
 const poloniex = new Poloniex()
