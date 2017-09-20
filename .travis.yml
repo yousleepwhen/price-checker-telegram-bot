@@ -9,3 +9,5 @@ branches:
   only:
     - master
     - development
+
+repo_token: 46mJKYrMjovW5Pc0wXCKEHkwFx9AQff2M
