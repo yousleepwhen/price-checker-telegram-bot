@@ -1,3 +1,5 @@
+const isUndefined = require("lodash/isUndefined");
+
 const axios = require('axios')
 const Bittrex = function() {
     if(!(this instanceof Bittrex)) return new Bittrex()
@@ -41,6 +43,7 @@ const Bittrex = function() {
         clearInterval(timer)
         timer = undefined
     }
+    this.isRun = () => !isUndefined(timer)
 
     this.getMarketSummary = () => market_summary
     this.getMarkets = () => market_info

@@ -39,4 +39,24 @@ describe('Bittrex Test', () => {
         })
             .then()
     })
+    it('should run bittrex timer', () => {
+        bittrex.run(1000)
+        return new Promise(function (resolve) {
+            setTimeout(() => {
+                expect(bittrex.isRun()).toEqual(true)
+                bittrex.stop()
+                resolve();
+            },1500)
+
+        })
+            .then()
+
+    })
+
+    it('should stop bittrex timer', () => {
+        bittrex.run(1000)
+        expect(bittrex.isRun()).toEqual(true)
+        bittrex.stop()
+        expect(bittrex.isRun()).toEqual(false)
+    })
 })

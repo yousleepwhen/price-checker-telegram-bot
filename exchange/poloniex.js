@@ -1,4 +1,5 @@
 const axios = require('axios')
+const isUndefined = require('lodash/isUndefined')
 
 const Poloniex = function(){
     if(!(this instanceof Poloniex)) return new Poloniex()
@@ -31,6 +32,8 @@ const Poloniex = function(){
         timer = undefined
     }
     this.getTicker = () => ticker
+
+    this.isRun = () => !isUndefined(timer)
 }
 
 module.exports.Poloniex = Poloniex
