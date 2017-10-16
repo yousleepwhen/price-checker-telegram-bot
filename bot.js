@@ -7,11 +7,14 @@ const appConfig = require('./config/config.json')
 
 const exchanges = require('./exchange')
 
+
+
 if(!process.env.TELEGRAM_BOT_TOKEN ){
     throw "Telegram bot token missing"
 }
 
 const token = process.env.TELEGRAM_BOT_TOKEN
+
 
 let webshot = require('webshot');
 let options = {
@@ -74,6 +77,9 @@ bithumb.run(5000)
 
 const coinone = new exchanges.Coinone()
 coinone.run(5000)
+
+const liqui = new exchanges.Liqui()
+liqui.run(5000)
 
 const Predicate = function(type, comparator ,value, market, coin){
     if(!(this instanceof Predicate)) return new Alarm(type, comparator, value, market, coin)
@@ -398,7 +404,7 @@ function defaultKeyboard(chatId) {
         "reply_markup": {
             "keyboard": [
                 ["TOP", "CAP","USDT-ETH", "USDT-BTC"],
-                ["ETH-BAT", "ETH-SNT","ETH-OMG"],
+                ["ETH-BAT", "ETH-SNT","ETH-OMG", "ETH-KNC"],
                 ["코빗","빗썸","코인원","김프"],["POLO"],["BITTREX"],["ALARM"]]
         }
     });
@@ -602,6 +608,16 @@ bot.on('message', (msg) => {
             let m = "Total Market Cap Usd: $" + marketCap + "\r\n" +
                 "BTC Dominance: " + bitPercentage + "%"
 
+            bot.sendMessage(chatId, m)
+            break
+        }
+        case 'ETH-KNC':{
+            let ticker = liqui.getMarketSummary().knc_eth
+
+            let high = `High: ${ticker.high} ETH`
+            let low =  `Low:  ${ticker.low} ETH`
+            let last = `Last: ${ticker.last} ETH`
+            let m = ['Kyber Network Token', high, low, last].join('\r\n')
             bot.sendMessage(chatId, m)
             break
         }
