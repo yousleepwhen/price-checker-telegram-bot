@@ -24,7 +24,7 @@
 - [x] Korean Premium
 - [x] Coinone
 - [x] Poloniex (only usdt market)
-~~- [x] Alarm -> remove
+~~- [x] Alarm -> remove~~
 - [x] CoinmarketCap Screenshot => /shot -> remove
 
 
