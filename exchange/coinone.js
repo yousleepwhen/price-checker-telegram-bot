@@ -13,7 +13,7 @@ const Coinone = function(){
             .then((r) => {
                 if(r.status == 200){
                     ticker = r.data
-                    console.log(ticker)
+                    // console.log(ticker)
                 }
             }).catch(err => console.log(err))
     }
