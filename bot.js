@@ -1,58 +1,38 @@
-const _ = require('lodash')
-const commonUtil = require('./util/common.js')
-const TelegramBot = require('node-telegram-bot-api');
-const appConfig = require('./config/config.json')
-
-const exchanges = require('./exchange')
-
+import Rate from "./lib/rate";
+import _ from 'lodash';
+import commonUtil from './util/common.js'
+import TelegramBot from 'node-telegram-bot-api';
+import webshot from 'webshot';
+import webshotConfig from './config/webshotConfig';
+import exchanges from './exchange';
+import BitFlyer from './exchange/bitflyer';
 
 
 if(!process.env.TELEGRAM_BOT_TOKEN ){
-    throw "Telegram bot token missing"
+  throw "Telegram bot token missing"
 }
-
+//
 const token = process.env.TELEGRAM_BOT_TOKEN
 
 
-let webshot = require('webshot');
-let options = {
-    windowSize:{
-      width:1150,
-      height:800
-    },
-    shotOffset:{
-        top:370,
-        left:30
-    },
-    screenSize: {
-        width: 1150
-        , height: 800
-    }
-    , shotSize: {
-        width: 1150
-        , height: 800
-    },
-    // phantomPath:'/opt/phantomjs/bin/phantomjs',
-    userAgent: 'Mozilla/5.0 (iPhone; U; CPU iPhone OS 3_2 like Mac OS X; en-us)'
-    + ' AppleWebKit/531.21.20 (KHTML, like Gecko) Mobile/7B298g'
-};
-webshot('coinmarketcap.com', 'cap.png',options, function(err) {
-})
+
+const App = {};
+
+App.Rater_KRW = new Rate('KRW');
+App.Rater_CNY = new Rate('CNY');
+App.Rater_KRW_TIMER = setInterval(() => App.Rater_KRW.getRate(), 5000);
+App.Rater_CNY_TIMER = setInterval(() => App.Rater_CNY.getRate(), 5000);
+App.Rater_KRW.getRate();
+App.Rater_CNY.getRate();
+App.Exchanges = {}
+App.Exchanges.BitFlyer = new BitFlyer();
+App.Exchanges.BitFlyer_TIMER = setInterval(() => App.Exchanges.BitFlyer.getTicker(), 5000);
+App.Exchanges.BitFlyer.getTicker();
+//
+
 let webshot_access = false
 
 const bot = new TelegramBot(token, {polling: true})
-
-
-const PriceChecker = function(telegram_bot) {
-    if(!(this instanceof PriceChecker)) return new PriceChecker(telegram_bot)
-    this.telegram_bot = telegram_bot
-}
-
-const Market = function(standard, name){
-    if(!(this instanceof Market)) return new Market(standard, name)
-    this.standard = standard
-    this.name = name
-}
 
 
 const bittrex = new exchanges.Bittrex()
@@ -67,9 +47,6 @@ coinMarketCap.run(5000)
 const poloniex = new exchanges.Poloniex()
 poloniex.run(5000)
 
-const yahoo = new exchanges.Yahoo()
-yahoo.run(10000)
-
 const bithumb = new exchanges.Bithumb()
 bithumb.run(5000)
 
@@ -78,106 +55,6 @@ coinone.run(5000)
 
 const liqui = new exchanges.Liqui()
 liqui.run(5000)
-
-const Predicate = function(type, comparator ,value, market, coin){
-    if(!(this instanceof Predicate)) return new Alarm(type, comparator, value, market, coin)
-
-    this.type = type
-    this.comparator = comparator
-    this.value = value
-
-    this.market = market
-    this.coin = coin
-
-    this.getMarketTitle = function(){
-        return this.market + "-" + this.coin
-    }
-    this.getString = function(){
-        if(this.type === "KrwPremium"){
-            return `Type: ${this.type} \r\n Compare: ${this.comparator} \r\n Value: ${this.value}`
-        } else {
-            return `Type: ${this.type} \r\n Market: ${this.market}-${this.coin} \r\n Compare: ${this.comparator} \r\n Value: ${this.value}`
-        }
-    }
-    this.check = function(){
-        if(this.type === "KrwPremium"){
-            calcKoreanPremium()
-            let lastEthRate = last_koreanPremium.eth
-            if(this.comparator === "Greater"){
-                if(this.value < lastEthRate)
-                    return true
-            }
-            else if (this.comparator === "Less"){
-                if(lastEthRate < this.value){
-                    return true
-                }
-            }
-            else if (this.comparator === "Equal"){
-                if(lastEthRate === this.value){
-                    return true
-                }
-            } else return false
-
-        } else if(this.type === "Market"){
-            let m = bittrex.getMarketSummary().filter((m) => m.MarketName === this.market + '-' + this.coin)[0]
-            if(this.comparator.toUpperCase() === "GREATER"){
-                if(parseFloat(m.Last,10) >= this.value ){
-                    return true
-                }
-            } else{
-                if(parseFloat(m.Last,10) < this.value ){
-                    return true
-                }
-            }
-
-        }
-        return false
-    }
-}
-
-const Alarm = function(owner, chatId, predicate, freq){
-    if(!(this instanceof Alarm)) return new Alarm(owner, chatId, predicate, freq)
-    this.owner = owner;
-    this.chatId = chatId;
-    this.predicate = predicate
-    this.freq = freq
-
-    this.pop = function(){
-        if(this.predicate.type === "KrwPremium"){
-            bot.sendMessage(this.chatId, "<b>ALARM KOREAN PREMIUM!!! by " +this.owner + "</b>\r\n" +
-                "🔥🔥🔥🔥🔥🔥🔥\r\n" + calcKoreanPremium() + "\r\n" +
-                "🔥🔥🔥🔥🔥🔥🔥", {parse_mode : "HTML"})
-
-        } else if (this.predicate.type === "Market"){
-
-            let mName = this.predicate.getMarketTitle()
-            let m = bittrextStringParse(_.find(bittrex.getMarketSummary(), {'MarketName':mName}))
-            bot.sendMessage(this.chatId,`<b>Price Alert by ${this.owner} ${this.predicate.getString()}</b>\r\n`.concat(m), {parse_mode : "HTML"})
-        }
-    }
-    this.getString = function(){
-        return `Owner: ${this.owner} \r\n`.concat(this.predicate.getString())
-    }
-}
-let current_alarm_processing;
-let current_alarm_type;
-let current_alarm_comparator;
-let current_alarm_value;
-let current_alarm_freq;
-
-let alarms =[]
-
-setInterval(() => {
-    _.each(alarms, (alarm,idx) => {
-        if(alarm.predicate.check()){
-            alarm.pop()
-            alarms.splice(idx,1)
-            console.log('Alarm Pop!')
-            console.log(alarm.getString())
-        }
-    })
-}, 10000)
-
 
 
 bot.onText(/\/echo (.+)/, (msg, match) => {
@@ -191,55 +68,6 @@ bot.onText(/\/echo (.+)/, (msg, match) => {
 // send back the matched "whatever" to the chat
     bot.sendMessage(chatId, resp);
 });
-
-bot.onText(/\add (.+)/,(msg, match) => {
-    console.log(msg)
-    let order = match[1].split('-')
-    if(order.length < 4){
-        return
-    }
-
-    console.log(order)
-    let markets = new Set(bittrex.getMarkets().map((m) => m.MarketName).map(m => m.match(/[A-Z]*[^-;]/).toString()))
-
-    if(!markets.has(order[0].toString().toUpperCase())){
-        console.log('no market')
-        bot.sendMessage(msg.chat.id, "No Market \r\n" + "Bittrex Market: " + new Array(...markets).join(' '))
-        return
-    }
-    let market = order[0].toUpperCase()
-    let summary = bittrex.getMarketSummary().filter((m) => m.MarketName === market.toUpperCase() + '-' + order[1].toString().toUpperCase())
-
-    console.log(market + '-' + order[1].toString().toUpperCase())
-    if(summary.length < 1){
-        console.log('no market')
-        bot.sendMessage(msg.chat.id, "Unknown Coin \r\n")
-        return
-    }
-
-    let type = order[2].toString().toUpperCase()
-    console.log(type)
-    if (!(type === "GREATER" || type === "LESS")) {
-        console.log('unknown compare')
-        bot.sendMessage(msg.chat.id, "Unknown Compare \r\n")
-        return
-    }
-
-    let v = parseFloat(order[3],10)
-    if(isNaN(v)){
-        console.log('unknown value')
-        bot.sendMessage(msg.chat.id, "Unknown Value. Must be float value. \r\n")
-        return
-    }
-
-
-    let predicate = new Predicate("Market", type, v, market, order[1].toString().toUpperCase() )
-    let alarm = new Alarm(msg.from.first_name + msg.from.last_name, msg.chat.id, predicate, 1)
-
-    alarms.push(alarm)
-    bot.sendMessage(msg.chat.id, 'Alarm Saved! Total Alarm Count:' + alarms.length)
-
-})
 
 function getHowManyEmoji(e, v){
     if(Math.abs(v) >= 0 && 9.999 > Math.abs(v) ){
@@ -287,7 +115,7 @@ function bittrextStringParse(tickerData){
 
         }
         else if (key ==="BITCNY"){
-            let cny_rate = yahoo.getRate()['CNY_USD'].last
+            let cny_rate = App.Rater_CNY.rate.rates.USD
             // console.log(tickerData.Last * cny_rate)
             lastUSD = " $" + parseFloat(tickerData.Last * cny_rate).toFixed(4)
             prevUSD = " $" + parseFloat(tickerData.PrevDay * cny_rate).toFixed(4)
@@ -340,61 +168,77 @@ function bittrextStringParse(tickerData){
 
 let last_koreanPremium = {
     dash:{
-
     },
     eth:{
-
     },
     btc:{
 
     }
 }
 function calcKoreanPremium(){
-    let usd_krw_rate = yahoo.getRate()["USD_KRW"].last
+  if(App.Rater_KRW.rate.rates.USD === undefined || App.Rater_KRW.rate.rates.USD === null){
+    return;
+  }
+  const usd_krw_rate = App.Rater_KRW.rate.rates.USD
+  const krw_jpy_rate = App.Rater_KRW.rate.rates.JPY
 
-    let bittrex_market_summary = bittrex.getMarketSummary()
-    let bithumb_ticker = bithumb.getTicker()
-
-    let usdDash = parseFloat(_.find(bittrex_market_summary, {'MarketName':'USDT-DASH'}).Last)
-    let krwDash = parseFloat(bithumb_ticker.DASH.last)
-
-    let usdBtc = parseFloat(_.find(bittrex_market_summary, {'MarketName':'USDT-BTC'}).Last)
-    let usdEth = parseFloat(_.find(bittrex_market_summary, {'MarketName':'USDT-ETH'}).Last)
-    let krwEth = parseFloat(bithumb_ticker.ETH.last)
-    let krwBtc = parseFloat(bithumb_ticker.BTC.last)
-
-    let usdKrwDash = usdDash * usd_krw_rate
-    let usdKrwEth = usdEth * usd_krw_rate
-    let usdKrwBtc = usdBtc * usd_krw_rate
-
-    let dashRate = commonUtil.getChange(krwDash, usdKrwDash, 2)
-    let ethRate = commonUtil.getChange(krwEth ,usdKrwEth ,2)
-    let btcRate = commonUtil.getChange(krwBtc , usdKrwBtc,2)
+  const bittrex_market_summary = bittrex.getMarketSummary()
+  const bithumb_ticker = bithumb.getTicker()
 
 
-    const getIcon = function(rate){
-        if(rate > 0.0){
-            return rate + "% 👍"
-        }
-        else if( rate < 0.0){
-            return rate + "% 👎"
-        } else return rate +"%"
-    }
-    last_koreanPremium.eth = ethRate
-    last_koreanPremium.btc = btcRate
-    last_koreanPremium.dash = dashRate
+  let usdDash = parseFloat(_.find(bittrex_market_summary, {'MarketName':'USDT-DASH'}).Last)
+  let krwDash = parseFloat(bithumb_ticker.DASH.closing_price)
 
-    let m = "KRW USD 환율: 1$ = "+ usd_krw_rate + "원\r\n" +
-        "🇰🇷😈  Bittrex:Bithumb\r\n" +
-        "DASH:<b>" + getIcon(dashRate)+ "</b>\r\n" +
+  let usdBtc = parseFloat(_.find(bittrex_market_summary, {'MarketName':'USDT-BTC'}).Last)
+  let usdEth = parseFloat(_.find(bittrex_market_summary, {'MarketName':'USDT-ETH'}).Last)
+  let krwEth = parseFloat(bithumb_ticker.ETH.closing_price)
+  let krwBtc = parseFloat(bithumb_ticker.BTC.closing_price)
 
-        "ETH :<b>\r\n" +
-        "     USD : $"+ usdEth +"(₩"+ commonUtil.numberWithCommas((usdEth * usd_krw_rate).toFixed(4)) +")\r\n" +
-        "     KRW : ₩"+ commonUtil.numberWithCommas(krwEth) +"\r\n" +
-        "     DIFF :" + getIcon(ethRate) + "</b>\r\n" +
+  let usdKrwDash = usdDash * usd_krw_rate
+  let usdKrwEth = usdEth * usd_krw_rate
+  let usdKrwBtc = usdBtc * usd_krw_rate
 
-        "BTC :<b>" + getIcon(btcRate) +"</b>"
-    return m;
+  const krw_jpy_btc = krw_jpy_rate * App.Exchanges.BitFlyer.ticker.ltp;
+
+
+  console.log(App.Exchanges.BitFlyer.ticker.ltp);
+
+  let dashRate = commonUtil.getChange(krwDash, usdKrwDash, 2)
+  let ethRate = commonUtil.getChange(krwEth ,usdKrwEth ,2)
+  let btcRate = commonUtil.getChange(krwBtc , usdKrwBtc,2)
+
+  let btc_krw_jpy_rate = commonUtil.getChange(krwBtc , krw_jpy_btc,2);
+
+  const getIcon = function(rate){
+      if(rate > 0.0){
+          return rate + "%"
+      }
+      else if( rate < 0.0){
+          return rate + "%"
+      } else return rate +"%"
+  }
+  last_koreanPremium.eth = ethRate
+  last_koreanPremium.btc = btcRate
+  last_koreanPremium.dash = dashRate
+
+
+  const message = `
+  환율 조회: https://api.fixer.io/
+날짜: ${App.Rater_KRW.rate.date}
+KRW USD 환율: 1$ = ${usd_krw_rate.toFixed(4)}원
+KRW JPY 환율: 1￥ = ${App.Rater_KRW.rate.rates.JPY.toFixed(4)}원
+대상: Bittrex : Bithumb
+BTC:<b>${getIcon(btcRate)}</b>
+ETH:<b>${getIcon(ethRate)} </b>
+ETH-USD(Bittrex):<b>$ ${usdEth}(₩ ${commonUtil.numberWithCommas((usdEth * usd_krw_rate).toFixed(0))})</b>
+ETH-KRW(Bithumb):<b>₩ ${commonUtil.numberWithCommas(krwEth)}</b>
+DASH:<b>${getIcon(dashRate)}</b>
+
+대상: Bithumb : Bitflyer
+BitFlyerBTC: ￥ ${App.Exchanges.BitFlyer.ticker.ltp} X ${App.Rater_KRW.rate.rates.JPY.toFixed(4)}
+BTC: <b>${btc_krw_jpy_rate}%</b>
+  `;
+    return message;
 }
 
 function defaultKeyboard(chatId) {
@@ -403,7 +247,7 @@ function defaultKeyboard(chatId) {
             "keyboard": [
                 ["TOP", "CAP","USDT-ETH", "USDT-BTC"],
                 ["ETH-BAT", "ETH-SNT","ETH-OMG", "ETH-KNC"],
-                ["코빗","빗썸","코인원","김프"],["POLO"],["BITTREX"],["ALARM"]]
+                ["코빗","빗썸","코인원","김프"],["POLO"],["BITTREX"]]
         }
     });
 }
@@ -412,16 +256,6 @@ bot.onText(/\/start/, (msg) => {
     defaultKeyboard(msg.chat.id)
 });
 
-bot.onText(/\ALARM/,(msg) => {
-    bot.sendMessage(msg.chat.id, "What do you want?", {
-        "reply_markup": {
-            "keyboard": [
-                ["AlarmList"],
-                ["AddAlarm"],
-                ["Cancel"]]
-        }
-    });
-})
 function getChange(m) {
     return {
         MarketName: m.MarketName,
@@ -434,20 +268,6 @@ function getChange(m) {
 bot.on('message', (msg) => {
     const chatId = msg.chat.id;
     console.log(msg)
-
-    if(appConfig.krw_premium_preset.find(x => x===parseFloat(msg.text)) !== undefined){
-        current_alarm_value = parseFloat(msg.text).toFixed(1)
-
-        bot.sendMessage(msg.chat.id, "Type:" +current_alarm_type +"\r\n Comparator:" + current_alarm_comparator+
-            "\r\n Value:"+ current_alarm_value + "\r\n Is that Okay?" , {
-            "reply_markup": {
-                "keyboard": [
-                    ["SaveAlarm"],
-                    ["BackToAlarm", "Cancel"]]
-            }
-        })
-        return
-    }
 
     switch(msg.text) {
         case 'TOP' :{
@@ -476,69 +296,6 @@ bot.on('message', (msg) => {
                 "reply_markup": {
                     "keyboard":market_array
 
-                }
-            })
-            break
-        }
-        case 'Equal':
-        case 'Greater':
-        case 'Less': {
-            current_alarm_comparator = msg.text
-            bot.sendMessage(msg.chat.id, "Select % Value", {
-                "reply_markup": {
-                    "keyboard": [
-                        ["15.0","10.0", "5.0", "2.0", "1.0"],
-                        ["-15.0", "-10.0", "-5.0", "-2.0", "-1.0"],
-                        ["0.0"],
-                        ["BackToAlarm", "Cancel"]]
-                }
-            })
-            break
-        }
-        case 'SaveAlarm':{
-            let predicate = new Predicate(current_alarm_type, current_alarm_comparator, current_alarm_value)
-            let alarm = new Alarm(msg.from.first_name + msg.from.last_name, chatId, predicate, 1)
-
-            alarms.push(alarm)
-            bot.sendMessage(chatId, 'Alarm Saved! Total Alarm Count:' + alarms.length)
-
-            defaultKeyboard(msg.chat.id)
-            break
-        }
-        case 'KrwPremium': {
-            current_alarm_type = "KrwPremium"
-            bot.sendMessage(msg.chat.id, "Select Comparator", {
-                "reply_markup": {
-                    "keyboard": [
-                        ["Equal","Greater", "Less"],
-                        ["BackToAlarm", "Cancel"]]
-                }
-            })
-            break
-        }
-        case 'AlarmList': {
-            let m = alarms.length > 0 ? alarms.map((a) => a.getString()).join('\r\n\r\n') : 'Alarm List Empty'
-
-            bot.sendMessage(chatId, m)
-            break
-        }
-        case 'AddAlarm': {
-            bot.sendMessage(msg.chat.id, "Which Type?", {
-                "reply_markup": {
-                    "keyboard": [
-                        ["KrwPremium"],
-                        ["BackToAlarm","Cancel"]]
-                }
-            })
-            break
-        }
-        case 'BackToAlarm': {
-            bot.sendMessage(msg.chat.id, "What do you want?", {
-                "reply_markup": {
-                    "keyboard": [
-                        ["AlarmList"],
-                        ["AddAlarm"],
-                        ["Cancel"]]
                 }
             })
             break
@@ -581,7 +338,7 @@ bot.on('message', (msg) => {
         case '/shot' :{
             if(!webshot_access){
                 webshot_access = true
-                webshot('coinmarketcap.com', 'cap.png',options, function(err) {
+                webshot('coinmarketcap.com', 'cap.png',webshotConfig, function(err) {
                     bot.sendPhoto(chatId,'cap.png');
                     webshot_access = false
                 })
@@ -591,7 +348,7 @@ bot.on('message', (msg) => {
         case '빗썸': {
             let bithumb_ticker = bithumb.getTicker()
             let keys = Object.keys(_.omit(bithumb_ticker,'date'))// date??
-            let strArr = _.map(keys, (key) => "Bithumb KRW-"+ key + ": ￦" + commonUtil.numberWithCommas(parseInt(bithumb_ticker[key].last,10)))
+            let strArr = _.map(keys, (key) => "Bithumb KRW-"+ key + ": ￦" + commonUtil.numberWithCommas(parseInt(bithumb_ticker[key].closing_price,10)))
             bot.sendMessage(chatId, strArr.join("\r\n"))
             break
         }

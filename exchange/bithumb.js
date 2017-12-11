@@ -7,17 +7,12 @@ const Bithumb = function(){
     let ticker
     let timer
 
-
-    const bithum_ticker_parse = function(data){
-        return _.each(data, (d) => d.last = d.closing_price)
-    }
-
     this.get_bithumb_ticker = function(){
 
         axios.get('https://api.bithumb.com/public/ticker/ALL')
             .then((r) => {
                 if(r.status == 200){
-                    ticker = bithum_ticker_parse(r.data.data)
+                    ticker = r.data.data
                 }
             }).catch(err => console.log(err))
     }

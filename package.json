@@ -1,19 +1,25 @@
 {
   "name": "price-checker-telegram-bot",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "crytocurrency price checker bot",
   "main": "bot.js",
   "scripts": {
-    "start": "node bot.js",
+    "start": "node index.js",
     "cover": "istanbul cover _mocha",
     "coveralls": "npm run cover -- --report lcovonly && cat ./coverage/lcov.info | coveralls",
-    "test": "node ./node_modules/.bin/mocha $(find ./test -name '*spec.js') --recursive",
-    "test_watch": "node ./node_modules/.bin/mocha $(find ./test -name '*spec.js') --recursive -w"
+    "test": "node ./node_modules/.bin/mocha $(find ./test -name '*spec.js') --recursive --compilers js:babel-core/register",
+    "test_watch": "node ./node_modules/.bin/mocha $(find ./test -name '*spec.js') --recursive -w --compilers js:babel-core/register"
   },
   "author": "forsyphilis@gmail.com",
   "license": "ISC",
   "dependencies": {
     "axios": "^0.16.2",
+    "babel-core": "^6.26.0",
+    "babel-polyfill": "^6.26.0",
+    "babel-preset-env": "^1.6.1",
+    "babel-preset-stage-0": "^6.24.1",
+    "babel-register": "^6.26.0",
+    "chai": "^4.1.2",
     "expect": "^21.1.0",
     "lodash": "^4.17.4",
     "node-telegram-bot-api": "^0.27.1",

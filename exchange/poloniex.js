@@ -7,6 +7,7 @@ const Poloniex = function(){
     let ticker
     let markets
     let timer
+    let global_market_summary
 
     this.get_poloniex_ticker = function(){
 
@@ -21,7 +22,6 @@ const Poloniex = function(){
     }
     this.run = function(interval){
         if(timer !== undefined){
-            console.log("Stop first")
             return
         }
         this.get_poloniex_ticker()
