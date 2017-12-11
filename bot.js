@@ -1,7 +1,5 @@
-
-const commonUtil = require('./util/common.js')
 const _ = require('lodash')
-
+const commonUtil = require('./util/common.js')
 const TelegramBot = require('node-telegram-bot-api');
 const appConfig = require('./config/config.json')
 
