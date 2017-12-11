@@ -3,7 +3,7 @@
 [![Coverage Status](https://coveralls.io/repos/github/forsyphilis/price-checker-telegram-bot/badge.svg?branch=development)](https://coveralls.io/github/forsyphilis/price-checker-telegram-bot?branch=development)
 
 #### # node 실행시 bot.js 의 Telegram bot token 을 직접 입력
-    $ node bot.js
+    $ node index.js
 
 #### # docker 실행시 환경 변수 입력 
     $ docker run -it -e TELEGRAM_BOT_TOKEN=YOUR_TELEGRAM_BOT_TOKEN forsyphilis/price-checker-telegram-bot
@@ -30,7 +30,7 @@
 - [x] Korean Premium
 - [x] Coinone
 - [x] Poloniex (only usdt market)
-- [x] Alarm
+- [x] Alarm -> remove
 - [x] CoinmarketCap Screenshot => /shot
 
 
