@@ -25,8 +25,10 @@ RUN curl -Lk -o $PHANTOMJS_ARCHIVE https://github.com/fgrehm/docker-phantomjs2/r
 
 
 ENV TELEGRAM_BOT_TOKEN=$TELEGRAM_BOT_TOKEN
+COPY ./index.js /usr/src/app/index.js
 COPY ./bot.js /usr/src/app/bot.js
 COPY ./util/** /usr/src/app/util/
+COPY ./lib/** /usr/src/app/lib/
 COPY ./config/** /usr/src/app/config/
 COPY ./exchange/** /usr/src/app/exchange/
 EXPOSE 5000
