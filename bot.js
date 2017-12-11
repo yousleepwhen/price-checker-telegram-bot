@@ -2,8 +2,6 @@ import Rate from "./lib/rate";
 import _ from 'lodash';
 import commonUtil from './util/common.js'
 import TelegramBot from 'node-telegram-bot-api';
-import webshot from 'webshot';
-import webshotConfig from './config/webshotConfig';
 import exchanges from './exchange';
 import BitFlyer from './exchange/bitflyer';
 
@@ -30,7 +28,6 @@ App.Exchanges.BitFlyer_TIMER = setInterval(() => App.Exchanges.BitFlyer.getTicke
 App.Exchanges.BitFlyer.getTicker();
 //
 
-let webshot_access = false
 
 const bot = new TelegramBot(token, {polling: true})
 
@@ -333,16 +330,6 @@ bot.on('message', (msg) => {
             let usdtTickers = _.sortBy(_.map(usdtTickerKey, (key) => {return {'name':key, 'ticker': ticker[key]}}), (m) => parseFloat(m.ticker.last,3)).reverse()
             let strArr = _.map(usdtTickers, (m) => `Poloniex ${m.name}: $${parseFloat(m.ticker.last,10).toFixed(3)} Change: ${(parseFloat(m.ticker.percentChange,10) * 100).toFixed(4)}%`)
             bot.sendMessage(chatId, strArr.join("\r\n"))
-            break
-        }
-        case '/shot' :{
-            if(!webshot_access){
-                webshot_access = true
-                webshot('coinmarketcap.com', 'cap.png',webshotConfig, function(err) {
-                    bot.sendPhoto(chatId,'cap.png');
-                    webshot_access = false
-                })
-            }
             break
         }
         case '빗썸': {
