@@ -1,0 +1,13 @@
+language: node_js
+  - "stable"
+
+install : "yarn install"
+
+script: npm run coveralls
+
+branches:
+  only:
+    - master
+    - development
+
+repo_token: 46mJKYrMjovW5Pc0wXCKEHkwFx9AQff2M
