@@ -289,7 +289,7 @@ bot.on('message', (msg) => {
             let market_array = _.chunk(_.map(_(arr).reverse().value(),'MarketName'),3)
             // let market_array = _.map(_(arr).reverse().value(),'MarketName').chunk_inefficient(3)
             market_array.push(['Cancel'])
-            bot.sendMessage(msg.chat.id, "Whice one?", {
+            bot.sendMessage(msg.chat.id, "Which one?", {
                 "reply_markup": {
                     "keyboard":market_array
 
