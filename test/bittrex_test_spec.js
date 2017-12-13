@@ -13,7 +13,7 @@ describe('Bittrex Test', () => {
 
         return new Promise(function (resolve) {
             setTimeout(() => {
-                let m = bittrex.getMarketSummary()
+                let m = bittrex.market_summary
                 let f = m.filter(market => market.MarketName === 'USDT-BTC')
                 expect(f[0].MarketName).toEqual('USDT-BTC')
                 expect(f.length).toEqual(1)
@@ -29,7 +29,7 @@ describe('Bittrex Test', () => {
 
         return new Promise(function (resolve) {
             setTimeout(() => {
-                let m = bittrex.getMarkets()
+                let m = bittrex.market_info
                 let f = m.filter(market => market.MarketName === 'USDT-BTC')
                 expect(f[0].MarketName).toEqual('USDT-BTC')
                 expect(f.length).toEqual(1)
@@ -38,25 +38,5 @@ describe('Bittrex Test', () => {
 
         })
             .then()
-    })
-    it('should run bittrex timer', () => {
-        bittrex.run(1000)
-        return new Promise(function (resolve) {
-            setTimeout(() => {
-                expect(bittrex.isRun()).toEqual(true)
-                bittrex.stop()
-                resolve();
-            },1500)
-
-        })
-            .then()
-
-    })
-
-    it('should stop bittrex timer', () => {
-        bittrex.run(1000)
-        expect(bittrex.isRun()).toEqual(true)
-        bittrex.stop()
-        expect(bittrex.isRun()).toEqual(false)
     })
 })

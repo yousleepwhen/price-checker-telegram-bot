@@ -5,8 +5,7 @@
   "main": "bot.js",
   "scripts": {
     "start": "node index.js",
-    "cover": "istanbul cover _mocha",
-    "coveralls": "npm run cover -- --report lcovonly && cat ./coverage/lcov.info | coveralls",
+    "cover": "istanbul cover _mocha -- --compilers js:babel-core/register && cat ./coverage/lcov.info | coveralls",
     "test": "node ./node_modules/.bin/mocha $(find ./test -name '*spec.js') --recursive --compilers js:babel-core/register",
     "test_watch": "node ./node_modules/.bin/mocha $(find ./test -name '*spec.js') --recursive -w --compilers js:babel-core/register"
   },
