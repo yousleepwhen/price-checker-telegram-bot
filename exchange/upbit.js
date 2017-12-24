@@ -7,36 +7,29 @@ export default class Upbit {
     this.page = page;
   }
   get_market_summary = () => {
-    const assets = this.page.evaluate(resultsSelector => {
-      const anchors = Array.from(document.querySelectorAll(resultsSelector));
+    const getTitle = result => {
+      const anchors = Array.from(document.querySelectorAll(result));
       return anchors.map(anchor => {
         const title = anchor.textContent.split('|')[0].trim();
         return `${title}`;
       });
+    }
+    const assets = this.page.evaluate(resultsSelector => {
+      return getTitle(resultsSelector);
     }, '.tit');
 
     const price = this.page.evaluate(resultsSelector => {
-      const anchors = Array.from(document.querySelectorAll(resultsSelector));
-      return anchors.map(anchor => {
-        const title = anchor.textContent.split('|')[0].trim();
-        return `${title}`;
-      });
+      return getTitle(resultsSelector);
     }, '.price');
-    // price.shift(); //remove 주문가능
-    // price.shift(); //remove 0 KRW
 
     const percent = this.page.evaluate(resultsSelector => {
-      const anchors = Array.from(document.querySelectorAll(resultsSelector));
-      return anchors.map(anchor => {
-        const title = anchor.textContent.split('|')[0].trim();
-        return `${title}`;
-      });
+      return getTitle(resultsSelector);
     }, '.percent');
 
     Promise.all([assets, price, percent]).then(r => {
       r[0].shift();
-      r[1].shift();
-      r[1].shift();
+      r[1].shift(); //remove 주문가능
+      r[1].shift(); //remove 0 KRW
 
       if(r[0].length === r[0].length && r[0].length === r[2].length) {
         const ticker = r[0].map((a, idx) => ({
@@ -49,9 +42,4 @@ export default class Upbit {
       }
     });
   }
-
-    // assets.shift();
-    // console.log(assets)
-
-
 }

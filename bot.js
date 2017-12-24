@@ -33,6 +33,8 @@ App.Exchanges.Bittrex_TIMER = setInterval(() => {
   App.Exchanges.Bittrex.get_bittrex_market_summary();
 }, 5000);
 
+
+// init headless browser
 (async () => {
   const browser = await puppeteer.launch();
   const page = await browser.newPage();
@@ -44,69 +46,6 @@ App.Exchanges.Bittrex_TIMER = setInterval(() => {
     App.Exchanges.UpBit.get_market_summary();
   }, 5000);
 })()
-
-//
-// (async () => {
-//   console.log('???')
-//   const browser = await puppeteer.launch();
-//   const page = await browser.newPage();
-//   await page.goto('https://upbit.com/exchange?code=CRIX.UPBIT.KRW-BTC', { waitUntil: 'networkidle2'});
-//   await page.waitForSelector('.search');
-//   const content =   await page.content();
-//   // await page.screenshot({path: 'full.png', fullPage: true});
-//   // const dimensions = await page.evaluate(() => {
-//   //   return {
-//   //     width: document.documentElement.clientWidth,
-//   //     height: document.documentElement.clientHeight,
-//   //     deviceScaleFactor: window.devicePixelRatio
-//   //   };
-//   // });
-//
-//
-//   const assets = await page.evaluate(resultsSelector => {
-//     const anchors = Array.from(document.querySelectorAll(resultsSelector));
-//     return anchors.map(anchor => {
-//       const title = anchor.textContent.split('|')[0].trim();
-//       return `${title}`;
-//     });
-//   }, '.tit');
-//   assets.shift();
-//
-//
-//   const price = await page.evaluate(resultsSelector => {
-//     const anchors = Array.from(document.querySelectorAll(resultsSelector));
-//     return anchors.map(anchor => {
-//       const title = anchor.textContent.split('|')[0].trim();
-//       return `${title}`;
-//     });
-//   }, '.price');
-//   price.shift(); //remove 주문가능
-//   price.shift(); //remove 0 KRW
-//
-//   const percent = await page.evaluate(resultsSelector => {
-//     const anchors = Array.from(document.querySelectorAll(resultsSelector));
-//     return anchors.map(anchor => {
-//       const title = anchor.textContent.split('|')[0].trim();
-//       return `${title}`;
-//     });
-//   }, '.percent');
-//
-//   if(assets.length === price.length && assets.length === percent.length) {
-//     const ticker = assets.map((a, idx) => ({
-//       name: a,
-//       price: price[idx],
-//       percent: percent[idx]
-//     }));
-//     sorted_ticker = ticker.sort((a, b) => parseInt(b.price.replace(/,/gi, '')) - parseInt(a.price.replace(/,/gi,'')))
-//
-//     console.log(sorted_ticker);
-//   }
-//   await browser.close();
-// })();
-//
-
-
-
 
 
 const korbit = new exchanges.Korbit()
@@ -286,7 +225,6 @@ function defaultKeyboard(chatId) {
                 ["TOP", "CAP","USDT-ETH", "USDT-BTC"],
                 ["ETH-BAT", "ETH-SNT", "USDT-BCC", "업빗"],
                 ["코빗","빗썸","코인원","김프"],
-              ["USDT-BCC"],
               ["POLO"],["BITTREX"]]
         }
     });
