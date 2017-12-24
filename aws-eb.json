@@ -1,0 +1,9 @@
+{
+  "AWSEBDockerrunVersion": "1",
+  "Image": {
+    "Name": "forsyphilis/price-checker-telegram-bot:latest"
+  },
+  "Ports": [{
+    "ContainerPort": "5000"
+  }]
+}

@@ -13,14 +13,16 @@
   "license": "ISC",
   "dependencies": {
     "axios": "^0.16.2",
+    "babel-preset-stage-1": "^6.24.1",
     "chai": "^4.1.2",
     "expect": "^21.1.0",
     "lodash": "^4.17.4",
-    "node-telegram-bot-api": "^0.27.1"
+    "node-telegram-bot-api": "^0.27.1",
+    "puppeteer": "^0.13.0"
   },
   "devDependencies": {
-    "babel-core": "^6.26.0",
     "babel-cli": "^6.26.0",
+    "babel-core": "^6.26.0",
     "babel-polyfill": "^6.26.0",
     "babel-preset-env": "^1.6.1",
     "babel-preset-stage-0": "^6.24.1",

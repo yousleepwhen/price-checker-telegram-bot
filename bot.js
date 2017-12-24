@@ -4,15 +4,16 @@ import { getHowManyEmoji, numberWithCommas, getChange, getKeySymbol } from './ut
 import TelegramBot from 'node-telegram-bot-api';
 import exchanges from './exchange';
 import BitFlyer from './exchange/bitflyer';
+import Upbit from './exchange/upbit';
+const puppeteer = require('puppeteer');
 
-
-if(!process.env.TELEGRAM_BOT_TOKEN ){
-  throw "Telegram bot token missing"
-}
-const token = process.env.TELEGRAM_BOT_TOKEN
+// if(!process.env.TELEGRAM_BOT_TOKEN ){
+//   throw "Telegram bot token missing"
+// }
+// const token = process.env.TELEGRAM_BOT_TOKEN
+const token = '433274725:AAEb_5Mv6r23atBuYG42iib0Ma7011mx4e8' //dev
 const bot = new TelegramBot(token, {polling: true})
 const App = {};
-
 
 // Rate Timer Set
 App.Rater_KRW = new Rate('KRW');
@@ -32,6 +33,81 @@ App.Exchanges.Bittrex_TIMER = setInterval(() => {
   App.Exchanges.Bittrex.get_bittrex_market_info();
   App.Exchanges.Bittrex.get_bittrex_market_summary();
 }, 5000);
+
+(async () => {
+  const browser = await puppeteer.launch();
+  const page = await browser.newPage();
+  await page.goto('https://upbit.com/exchange?code=CRIX.UPBIT.KRW-BTC', { waitUntil: 'networkidle2'});
+  await page.waitForSelector('.search');
+  App.Exchanges.UpBit = new Upbit(browser, page);
+
+  App.Exchanges.Bittrex_TIMER = setInterval(() => {
+    App.Exchanges.UpBit.get_market_summary();
+  }, 5000);
+})()
+
+//
+// (async () => {
+//   console.log('???')
+//   const browser = await puppeteer.launch();
+//   const page = await browser.newPage();
+//   await page.goto('https://upbit.com/exchange?code=CRIX.UPBIT.KRW-BTC', { waitUntil: 'networkidle2'});
+//   await page.waitForSelector('.search');
+//   const content =   await page.content();
+//   // await page.screenshot({path: 'full.png', fullPage: true});
+//   // const dimensions = await page.evaluate(() => {
+//   //   return {
+//   //     width: document.documentElement.clientWidth,
+//   //     height: document.documentElement.clientHeight,
+//   //     deviceScaleFactor: window.devicePixelRatio
+//   //   };
+//   // });
+//
+//
+//   const assets = await page.evaluate(resultsSelector => {
+//     const anchors = Array.from(document.querySelectorAll(resultsSelector));
+//     return anchors.map(anchor => {
+//       const title = anchor.textContent.split('|')[0].trim();
+//       return `${title}`;
+//     });
+//   }, '.tit');
+//   assets.shift();
+//
+//
+//   const price = await page.evaluate(resultsSelector => {
+//     const anchors = Array.from(document.querySelectorAll(resultsSelector));
+//     return anchors.map(anchor => {
+//       const title = anchor.textContent.split('|')[0].trim();
+//       return `${title}`;
+//     });
+//   }, '.price');
+//   price.shift(); //remove 주문가능
+//   price.shift(); //remove 0 KRW
+//
+//   const percent = await page.evaluate(resultsSelector => {
+//     const anchors = Array.from(document.querySelectorAll(resultsSelector));
+//     return anchors.map(anchor => {
+//       const title = anchor.textContent.split('|')[0].trim();
+//       return `${title}`;
+//     });
+//   }, '.percent');
+//
+//   if(assets.length === price.length && assets.length === percent.length) {
+//     const ticker = assets.map((a, idx) => ({
+//       name: a,
+//       price: price[idx],
+//       percent: percent[idx]
+//     }));
+//     sorted_ticker = ticker.sort((a, b) => parseInt(b.price.replace(/,/gi, '')) - parseInt(a.price.replace(/,/gi,'')))
+//
+//     console.log(sorted_ticker);
+//   }
+//   await browser.close();
+// })();
+//
+
+
+
 
 
 const korbit = new exchanges.Korbit()
@@ -209,7 +285,7 @@ function defaultKeyboard(chatId) {
         "reply_markup": {
             "keyboard": [
                 ["TOP", "CAP","USDT-ETH", "USDT-BTC"],
-                ["ETH-BAT", "ETH-SNT","ETH-OMG", "ETH-KNC"],
+                ["ETH-BAT", "ETH-SNT", "USDT-BCC", "업빗"],
                 ["코빗","빗썸","코인원","김프"],
               ["USDT-BCC"],
               ["POLO"],["BITTREX"]]
@@ -248,104 +324,112 @@ bot.on('message', (msg) => {
       bot.sendMessage(msg.chat.id, "<b>Bittrex Top 10 Change 🔥</b> \r\n".concat(m) + "\r\n==\r\n".concat(b),{parse_mode:"HTML"})
       break;
     }
-        case 'Cancel': {
-            defaultKeyboard(msg.chat.id)
-            break
-        }
-        case 'BITTREX': {
-            let arr = _.sortBy(market_summary,(market) => parseFloat(market.Last))
-            let market_array = _.chunk(_.map(_(arr).reverse().value(),'MarketName'),3)
-            // let market_array = _.map(_(arr).reverse().value(),'MarketName').chunk_inefficient(3)
-            market_array.push(['Cancel'])
-            bot.sendMessage(msg.chat.id, "Which one?", {
-                "reply_markup": {
-                    "keyboard":market_array
+    case 'Cancel': {
+        defaultKeyboard(msg.chat.id)
+        break
+    }
+    case 'BITTREX': {
+        let arr = _.sortBy(market_summary,(market) => parseFloat(market.Last))
+        let market_array = _.chunk(_.map(_(arr).reverse().value(),'MarketName'),3)
+        // let market_array = _.map(_(arr).reverse().value(),'MarketName').chunk_inefficient(3)
+        market_array.push(['Cancel'])
+        bot.sendMessage(msg.chat.id, "Which one?", {
+            "reply_markup": {
+                "keyboard":market_array
 
-                }
-            })
-            break
-        }
-        case '/korbit':
-        case '/코빗':
-        case '코빗': {
-            let market_summary = korbit.getMarketSummary()
-            let strArr = _.map(market_summary, market => {
-              return "Korbit " + market.MarketName + ": ￦" + numberWithCommas(market.last || 0)
-            })
+            }
+        })
+        break
+    }
+    case '/korbit':
+    case '/코빗':
+    case '코빗': {
+        let market_summary = korbit.getMarketSummary()
+        let strArr = _.map(market_summary, market => {
+          return "Korbit " + market.MarketName + ": ￦" + numberWithCommas(market.last || 0)
+        })
 
-            bot.sendMessage(chatId, strArr.join("\r\n"))
-            break
-        }
-        case 'COINONE':
-        case '코인원': {
+        bot.sendMessage(chatId, strArr.join("\r\n"))
+        break
+    }
+    case 'COINONE':
+    case '코인원': {
 
-            let ticker = coinone.getTicker()
-            let keys = Object.keys(ticker)// date??
-            keys = new Set(keys)
-            keys.delete('result')
-            keys.delete('errorCode')
-            keys.delete('timestamp')
-            keys = Array.from(keys)
+        let ticker = coinone.getTicker()
+        let keys = Object.keys(ticker)// date??
+        keys = new Set(keys)
+        keys.delete('result')
+        keys.delete('errorCode')
+        keys.delete('timestamp')
+        keys = Array.from(keys)
 
-            let strArr = _.map(keys, (key) => "CoinOne KRW-"+ key.toUpperCase() + ": ￦" + numberWithCommas(parseInt(ticker[key].last,10)))
-            bot.sendMessage(chatId, strArr.join("\r\n"))
+        let strArr = _.map(keys, (key) => "CoinOne KRW-"+ key.toUpperCase() + ": ￦" + numberWithCommas(parseInt(ticker[key].last,10)))
+        bot.sendMessage(chatId, strArr.join("\r\n"))
 
-            break
-        }
-        case 'POLO':{
-            let ticker = poloniex.getTicker()
-            let usdtTickerKey = _.filter(Object.keys(ticker), (t) =>  t.match(/^USDT_[a-z0-9A-Z]{3,6}$/))
-            let usdtTickers = _.sortBy(_.map(usdtTickerKey, (key) => {return {'name':key, 'ticker': ticker[key]}}), (m) => parseFloat(m.ticker.last,3)).reverse()
-            let strArr = _.map(usdtTickers, (m) => `Poloniex ${m.name}: $${parseFloat(m.ticker.last,10).toFixed(3)} Change: ${(parseFloat(m.ticker.percentChange,10) * 100).toFixed(4)}%`)
-            bot.sendMessage(chatId, strArr.join("\r\n"))
-            break
-        }
-        case '빗썸': {
-            const bithumb_ticker = bithumb.getTicker()
-            let keys = Object.keys(_.omit(bithumb_ticker,'date'))// date??
-            let strArr = _.map(keys, (key) => "Bithumb KRW-"+ key + ": ￦" + numberWithCommas(parseInt(bithumb_ticker[key].closing_price,10)))
-            bot.sendMessage(chatId, strArr.join("\r\n"))
-            break
-        }
-        case '김프': {
-            bot.sendMessage(chatId, calcKoreanPremium(), {parse_mode : "HTML"})
-            break
-        }
-        case 'CAP':{
-            let marketCap = numberWithCommas(coinMarketCap.getSummary().total_market_cap_usd)
-            let bitPercentage = coinMarketCap.getSummary().bitcoin_percentage_of_market_cap
+        break
+    }
+    case 'POLO':{
+        let ticker = poloniex.getTicker()
+        let usdtTickerKey = _.filter(Object.keys(ticker), (t) =>  t.match(/^USDT_[a-z0-9A-Z]{3,6}$/))
+        let usdtTickers = _.sortBy(_.map(usdtTickerKey, (key) => {return {'name':key, 'ticker': ticker[key]}}), (m) => parseFloat(m.ticker.last,3)).reverse()
+        let strArr = _.map(usdtTickers, (m) => `Poloniex ${m.name}: $${parseFloat(m.ticker.last,10).toFixed(3)} Change: ${(parseFloat(m.ticker.percentChange,10) * 100).toFixed(4)}%`)
+        bot.sendMessage(chatId, strArr.join("\r\n"))
+        break
+    }
+    case '빗썸': {
+        const bithumb_ticker = bithumb.getTicker()
+        let keys = Object.keys(_.omit(bithumb_ticker,'date'))// date??
+        let strArr = _.map(keys, (key) => "Bithumb KRW-"+ key + ": ￦" + numberWithCommas(parseInt(bithumb_ticker[key].closing_price,10)))
+        bot.sendMessage(chatId, strArr.join("\r\n"))
+        break
+    }
+    case '김프': {
+        bot.sendMessage(chatId, calcKoreanPremium(), {parse_mode : "HTML"})
+        break
+    }
+    case 'CAP':{
+        let marketCap = numberWithCommas(coinMarketCap.getSummary().total_market_cap_usd)
+        let bitPercentage = coinMarketCap.getSummary().bitcoin_percentage_of_market_cap
 
-            let m = "Total Market Cap Usd: $" + marketCap + "\r\n" +
-                "BTC Dominance: " + bitPercentage + "%"
+        let m = "Total Market Cap Usd: $" + marketCap + "\r\n" +
+            "BTC Dominance: " + bitPercentage + "%"
 
-            bot.sendMessage(chatId, m)
-            break
-        }
-        case 'ETH-KNC':{
-            let ticker = liqui.getMarketSummary().knc_eth
+        bot.sendMessage(chatId, m)
+        break
+    }
+    case 'ETH-KNC':{
+        let ticker = liqui.getMarketSummary().knc_eth
 
-            let high = `High: ${ticker.high} ETH`
-            let low =  `Low:  ${ticker.low} ETH`
-            let last = `Last: ${ticker.last} ETH`
-            let m = ['Kyber Network Token', high, low, last].join('\r\n')
-            bot.sendMessage(chatId, m)
-            break
-        }
-        default :{
+        let high = `High: ${ticker.high} ETH`
+        let low =  `Low:  ${ticker.low} ETH`
+        let last = `Last: ${ticker.last} ETH`
+        let m = ['Kyber Network Token', high, low, last].join('\r\n')
+        bot.sendMessage(chatId, m)
+        break
+    }
+    case '업빗': {
+      const strings = App.Exchanges.UpBit.market_summary.map(m => {
+        return `${m.name} ${m.price} ${m.percent}`
+      })
 
-          const selected_market = _.find(market_info,{'MarketName':msg.text.replace('/','').toUpperCase()})
-          if(selected_market === undefined){
-              break
-          }
-          // if(selected_market.LogoUrl !== null){
-          //     bot.sendPhoto(chatId, selected_market.LogoUrl);
-          // }
-          const selected_market_summary = _.find(market_summary, {'MarketName':msg.text.replace('/','').toUpperCase()})
-          const returnMsg = bittrextStringParse(selected_market_summary)
-          bot.sendMessage(chatId, returnMsg,{parse_mode : "HTML"})
-          defaultKeyboard(msg.chat.id)
+      bot.sendMessage(chatId, strings.join('\n'))
+      break;
+    }
+    default :{
+
+      const selected_market = _.find(market_info,{'MarketName':msg.text.replace('/','').toUpperCase()})
+      if(selected_market === undefined){
           break
-        }
+      }
+      // if(selected_market.LogoUrl !== null){
+      //     bot.sendPhoto(chatId, selected_market.LogoUrl);
+      // }
+      const selected_market_summary = _.find(market_summary, {'MarketName':msg.text.replace('/','').toUpperCase()})
+      const returnMsg = bittrextStringParse(selected_market_summary)
+      bot.sendMessage(chatId, returnMsg,{parse_mode : "HTML"})
+      defaultKeyboard(msg.chat.id)
+      break
+    }
     }
 });
 
