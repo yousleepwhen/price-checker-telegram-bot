@@ -31,7 +31,7 @@ App.Exchanges.Bittrex = new exchanges.Bittrex();
 App.Exchanges.Bittrex_TIMER = setInterval(() => {
   App.Exchanges.Bittrex.get_bittrex_market_info();
   App.Exchanges.Bittrex.get_bittrex_market_summary();
-}, 5000);
+}, 4000);
 
 
 // init headless browser
@@ -44,7 +44,7 @@ App.Exchanges.Bittrex_TIMER = setInterval(() => {
 
   App.Exchanges.Bittrex_TIMER = setInterval(() => {
     App.Exchanges.UpBit.get_market_summary();
-  }, 5000);
+  }, 2500);
 })()
 
 
@@ -345,11 +345,14 @@ bot.on('message', (msg) => {
         break
     }
     case '업빗': {
-      const strings = App.Exchanges.UpBit.market_summary.map(m => {
-        return `${m.name} ${m.price} ${m.percent}`
-      })
-
-      bot.sendMessage(chatId, strings.join('\n'))
+      if(App.Exchanges.UpBit.market_summary !== null){
+        const strings = App.Exchanges.UpBit.market_summary.map(m => {
+          return `${m.name} ${m.price} ${m.percent}`
+        })
+        bot.sendMessage(chatId, strings.join('\n'))
+        break;
+      }
+      bot.sendMessage(chatId, 'Something wrong!')
       break;
     }
     default :{

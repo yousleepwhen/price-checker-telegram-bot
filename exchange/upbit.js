@@ -1,29 +1,34 @@
-
 export default class Upbit {
   constructor(browser, page) {
-    this.market_summary = {};
+    this.market_summary = null;
     this.market_info = {};
     this.browser = browser;
     this.page = page;
   }
   get_market_summary = () => {
-    const getTitle = result => {
-      const anchors = Array.from(document.querySelectorAll(result));
+    const assets = this.page.evaluate(resultsSelector => {
+      const anchors = Array.from(document.querySelectorAll(resultsSelector));
+      console.log(anchors);
       return anchors.map(anchor => {
         const title = anchor.textContent.split('|')[0].trim();
         return `${title}`;
       });
-    }
-    const assets = this.page.evaluate(resultsSelector => {
-      return getTitle(resultsSelector);
     }, '.tit');
 
     const price = this.page.evaluate(resultsSelector => {
-      return getTitle(resultsSelector);
+      const anchors = Array.from(document.querySelectorAll(resultsSelector));
+      return anchors.map(anchor => {
+        const title = anchor.textContent.split('|')[0].trim();
+        return `${title}`;
+      });
     }, '.price');
 
     const percent = this.page.evaluate(resultsSelector => {
-      return getTitle(resultsSelector);
+      const anchors = Array.from(document.querySelectorAll(resultsSelector));
+      return anchors.map(anchor => {
+        const title = anchor.textContent.split('|')[0].trim();
+        return `${title}`;
+      });
     }, '.percent');
 
     Promise.all([assets, price, percent]).then(r => {
