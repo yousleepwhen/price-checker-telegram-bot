@@ -210,7 +210,9 @@ function defaultKeyboard(chatId) {
             "keyboard": [
                 ["TOP", "CAP","USDT-ETH", "USDT-BTC"],
                 ["ETH-BAT", "ETH-SNT","ETH-OMG", "ETH-KNC"],
-                ["코빗","빗썸","코인원","김프"],["POLO"],["BITTREX"]]
+                ["코빗","빗썸","코인원","김프"],
+              ["USDT-BCC"],
+              ["POLO"],["BITTREX"]]
         }
     });
 }
