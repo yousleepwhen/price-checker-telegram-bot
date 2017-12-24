@@ -7,11 +7,11 @@ import BitFlyer from './exchange/bitflyer';
 import Upbit from './exchange/upbit';
 const puppeteer = require('puppeteer');
 
-// if(!process.env.TELEGRAM_BOT_TOKEN ){
-//   throw "Telegram bot token missing"
-// }
-// const token = process.env.TELEGRAM_BOT_TOKEN
-const token = '433274725:AAEb_5Mv6r23atBuYG42iib0Ma7011mx4e8' //dev
+if(!process.env.TELEGRAM_BOT_TOKEN ){
+  throw "Telegram bot token missing"
+}
+const token = process.env.TELEGRAM_BOT_TOKEN
+// const token = '433274725:AAEb_5Mv6r23atBuYG42iib0Ma7011mx4e8' //dev
 const bot = new TelegramBot(token, {polling: true})
 const App = {};
 
