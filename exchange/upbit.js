@@ -1,4 +1,6 @@
 import chunk from 'lodash/chunk';
+const puppeteer = require('puppeteer');
+
 export default class Upbit {
   constructor(browser, page) {
     this.market_summary = null;
