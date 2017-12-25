@@ -1,3 +1,4 @@
+import chunk from 'lodash/chunk';
 export default class Upbit {
   constructor(browser, page) {
     this.market_summary = null;
@@ -19,63 +20,27 @@ export default class Upbit {
     //   this.refresh = false;
     // })
   }
-  get_market_summary = () => {
-    if(this.refresh){
-      return;
-    }
-    this.refresh = true;
-    const page = this.page.goto('https://upbit.com/exchange?code=CRIX.UPBIT.KRW-BTC', { waitUntil: 'networkidle2'});
+  async get_market_summary_async() {
+    await this.page.goto('https://upbit.com/exchange?code=CRIX.UPBIT.KRW-BTC', { waitUntil: 'networkidle2'});
+    await this.page.waitForSelector('.search');
+    const assets = await this.page.evaluate(resultsSelector => {
+      const anchors = Array.from(document.querySelectorAll(resultsSelector));
+      return anchors.map(anchor => {
+        const title = anchor.textContent.split('|')[0].trim();
+        return `${title}`;
+      });
+    }, '.tit, .price, .percent');
+    const m = chunk(assets, 3);
+    m.shift();
 
-    let assets = {};
-    let price = {};
-    let percent = {};
-
-    page
-      .then(r => this.page.waitForSelector('.search'))
-      .then(r => {
-        assets = this.page.evaluate(resultsSelector => {
-          const anchors = Array.from(document.querySelectorAll(resultsSelector));
-          return anchors.map(anchor => {
-            const title = anchor.textContent.split('|')[0].trim();
-            return `${title}`;
-          });
-        }, '.tit');
-
-        price = this.page.evaluate(resultsSelector => {
-          const anchors = Array.from(document.querySelectorAll(resultsSelector));
-          return anchors.map(anchor => {
-            const title = anchor.textContent.split('|')[0].trim();
-            return `${title}`;
-          });
-        }, '.price');
-
-        percent = this.page.evaluate(resultsSelector => {
-          const anchors = Array.from(document.querySelectorAll(resultsSelector));
-          return anchors.map(anchor => {
-            const title = anchor.textContent.split('|')[0].trim();
-            return `${title}`;
-          });
-        }, '.percent');
-
-        Promise.all([assets, price, percent]).then(r => {
-          // console.log(r);
-          r[0].shift();
-          r[1].shift(); //remove 주문가능
-          r[1].shift(); //remove 0 KRW
-
-          if(r[0].length === r[1].length && r[0].length === r[2].length) {
-            const ticker = r[0].map((a, idx) => ({
-              name: a,
-              price: r[1][idx],
-              percent: r[2][idx]
-            }));
-            this.market_summary =
-              ticker.sort((a, b) => parseInt(b.price.replace(/,/gi, '')) - parseInt(a.price.replace(/,/gi,'')));
-            this.last_date = new Date();
-            // console.log(this.last_date.toUTCString())
-          }
-          this.refresh = false;
-        });
-      })
+    const ticker = m.map(a => ({
+      name: a[0],
+      price: a[1],
+      percent: a[2]
+    }));
+    this.market_summary =
+      ticker.sort((a, b) => parseInt(b.price.replace(/,/gi, '')) - parseInt(a.price.replace(/,/gi,'')));
+    // this.last_date = new Date();
+    // console.log(this.last_date.toUTCString())
   }
 }
