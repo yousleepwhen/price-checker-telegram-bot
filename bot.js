@@ -44,7 +44,7 @@ App.Exchanges.Bittrex_TIMER = setInterval(() => {
 
   App.Exchanges.Bittrex_TIMER = setInterval(async () => {
     await App.Exchanges.UpBit.get_market_summary_async();
-  }, 5000);
+  }, 10000);
 })()
 
 

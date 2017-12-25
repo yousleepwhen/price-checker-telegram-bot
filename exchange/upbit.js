@@ -14,27 +14,17 @@ export default class Upbit {
     this.page.on('error', (err) => {
       console.log('ERROR', err);
     })
+
     process.on("unhandledRejection", async (reason, p) => {
       console.error("Unhandled Rejection at: Promise", p, "reason:", reason);
-      await this.browser.close();
-      this.browser = await puppeteer.launch();
-      this.page = await this.browser.newPage();
+      // await this.browser.close();
+      // this.browser = await puppeteer.launch();
+      // this.page = await this.browser.newPage();
+      // this.pause = true;
     });
   }
-  refresh = () => {
-    // this.refresh = true;
-    // console.log('REFRESH!');
-    // const page = this.page.goto('https://upbit.com/exchange?code=CRIX.UPBIT.KRW-BTC', { waitUntil: 'networkidle2'});
-    // page
-    //   .then(r => {
-    //   return page.waitForSelector('.search');
-    // }).then(r => {
-    //   console.log(r);
-    //   this.refresh = false;
-    // })
-  }
   async get_market_summary_async() {
-    if(this.count > 30){
+    if(this.count > 15){
       await this.page.close();
       this.page = await this.browser.newPage();
       this.page.once('load', () => console.log('Page loaded!'));
