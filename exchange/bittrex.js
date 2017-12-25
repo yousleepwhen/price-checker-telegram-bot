@@ -1,7 +1,7 @@
 const axios = require('axios')
 class Bittrex {
   constructor(){
-    this.market_summary = {};
+    this.market_summary = null;
     this.market_info = {};
   }
   get_bittrex_market_summary = () => {

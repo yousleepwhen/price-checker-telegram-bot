@@ -12,6 +12,12 @@ export default class Upbit {
     this.page.on('error', (err) => {
       console.log('ERROR', err);
     })
+    process.on("unhandledRejection", async (reason, p) => {
+      console.error("Unhandled Rejection at: Promise", p, "reason:", reason);
+      await this.browser.close();
+      this.browser = await puppeteer.launch();
+      this.page = await this.browser.newPage();
+    });
   }
   refresh = () => {
     // this.refresh = true;

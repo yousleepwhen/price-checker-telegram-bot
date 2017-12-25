@@ -44,7 +44,7 @@ App.Exchanges.Bittrex_TIMER = setInterval(() => {
 
   App.Exchanges.Bittrex_TIMER = setInterval(async () => {
     await App.Exchanges.UpBit.get_market_summary_async();
-  }, 2500);
+  }, 5000);
 })()
 
 
@@ -166,6 +166,9 @@ function calcKoreanPremium(){
   const krw_jpy_rate = App.Rater_KRW.rate.rates.JPY
 
   const bittrex_market_summary = App.Exchanges.Bittrex.market_summary
+  if(bittrex_market_summary === null){
+    return;
+  }
   const bithumb_ticker = bithumb.getTicker()
 
 
