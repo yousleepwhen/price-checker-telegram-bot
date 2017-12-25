@@ -7,6 +7,11 @@ export default class Upbit {
     this.page = page;
     this.refresh = false;
     this.last_date = {};
+    this.count = 0;
+    this.page.once('load', () => console.log('Page loaded!'));
+    this.page.on('error', (err) => {
+      console.log('ERROR', err);
+    })
   }
   refresh = () => {
     // this.refresh = true;
@@ -21,6 +26,16 @@ export default class Upbit {
     // })
   }
   async get_market_summary_async() {
+    if(this.count > 30){
+      await this.page.close();
+      this.page = await this.browser.newPage();
+      this.page.once('load', () => console.log('Page loaded!'));
+      this.page.on('error', (err) => {
+        console.log('ERROR', err);
+      })
+      this.count = 0;
+    }
+
     await this.page.goto('https://upbit.com/exchange?code=CRIX.UPBIT.KRW-BTC', { waitUntil: 'networkidle2'});
     await this.page.waitForSelector('.search');
     const assets = await this.page.evaluate(resultsSelector => {
@@ -40,6 +55,7 @@ export default class Upbit {
     }));
     this.market_summary =
       ticker.sort((a, b) => parseInt(b.price.replace(/,/gi, '')) - parseInt(a.price.replace(/,/gi,'')));
+    this.count++;
     // this.last_date = new Date();
     // console.log(this.last_date.toUTCString())
   }
