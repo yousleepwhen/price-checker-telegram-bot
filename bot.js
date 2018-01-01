@@ -38,11 +38,14 @@ App.Exchanges.Bittrex_TIMER = setInterval(() => {
 (async () => {
   const browser = await puppeteer.launch();
   const page = await browser.newPage();
-  await page.goto('https://upbit.com/exchange?code=CRIX.UPBIT.KRW-BTC', { waitUntil: 'networkidle2'});
+  await page.goto('https://upbit.com/exchange?code=CRIX.UPBIT.KRW-BTC',
+    { waitUntil: 'networkidle2',
+      timeout: 0,
+    });
   await page.waitForSelector('.search');
   App.Exchanges.UpBit = new Upbit(browser, page);
 
-  App.Exchanges.Bittrex_TIMER = setInterval(async () => {
+  App.Exchanges.UpBit_TIMER = setInterval(async () => {
     await App.Exchanges.UpBit.get_market_summary_async();
   }, 10000);
 })()

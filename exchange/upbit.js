@@ -34,7 +34,10 @@ export default class Upbit {
       this.count = 0;
     }
 
-    await this.page.goto('https://upbit.com/exchange?code=CRIX.UPBIT.KRW-BTC', { waitUntil: 'networkidle2'});
+    await page.goto('https://upbit.com/exchange?code=CRIX.UPBIT.KRW-BTC',
+      { waitUntil: 'networkidle2',
+        timeout: 0,
+      });
     await this.page.waitForSelector('.search');
     const assets = await this.page.evaluate(resultsSelector => {
       const anchors = Array.from(document.querySelectorAll(resultsSelector));
