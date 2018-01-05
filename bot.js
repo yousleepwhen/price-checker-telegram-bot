@@ -5,6 +5,11 @@ import TelegramBot from 'node-telegram-bot-api';
 import exchanges from './exchange';
 import BitFlyer from './exchange/bitflyer';
 import Binance from './exchange/binance';
+import Poloniex from './exchange/poloniex';
+import CoinOne from './exchange/coinone';
+import Bithumb from './exchange/bithumb';
+import Korbit from './exchange/korbit';
+import CoinMarketCap from './exchange/coinmarketcap';
 if(!process.env.TELEGRAM_BOT_TOKEN ){
   throw "Telegram bot token missing"
 }
@@ -33,6 +38,11 @@ App.Exchanges.Bittrex_TIMER = setInterval(() => {
   App.Exchanges.Bittrex.get_bittrex_market_summary();
 }, 4000);
 
+App.Exchanges.Poloniex = new Poloniex();
+App.Exchanges.CoinOne = new CoinOne();
+App.Exchanges.Bithumb = new Bithumb();
+App.Exchanges.Korbit = new Korbit();
+App.Exchanges.CoinMarketCap = new CoinMarketCap();
 
 // init headless browser
 // (async () => {
@@ -49,22 +59,6 @@ App.Exchanges.Bittrex_TIMER = setInterval(() => {
 //     await App.Exchanges.UpBit.get_market_summary_async();
 //   }, 10000);
 // })()
-
-
-const korbit = new exchanges.Korbit()
-korbit.run(10000)
-
-const coinMarketCap = new exchanges.CoinMarketCap()
-coinMarketCap.run(5000)
-
-const poloniex = new exchanges.Poloniex()
-poloniex.run(5000)
-
-const bithumb = new exchanges.Bithumb()
-bithumb.run(5000)
-
-const coinone = new exchanges.Coinone()
-coinone.run(5000)
 
 
 bot.onText(/\/echo (.+)/, (msg, match) => {
@@ -152,7 +146,7 @@ function bittrextStringParse(tickerData){
     }
 }
 
-function calcKoreanPremium(){
+async function calcKoreanPremium(){
   if(App.Rater_KRW.rate.rates.USD === undefined || App.Rater_KRW.rate.rates.USD === null){
     return;
   }
@@ -163,9 +157,8 @@ function calcKoreanPremium(){
   if(bittrex_market_summary === null){
     return;
   }
-  const bithumb_ticker = bithumb.getTicker()
 
-
+  const bithumb_ticker = await App.Exchanges.Bithumb.getTicker();
   let usdDash = parseFloat(_.find(bittrex_market_summary, {'MarketName':'USDT-DASH'}).Last)
   let krwDash = parseFloat(bithumb_ticker.DASH.closing_price)
 
@@ -188,12 +181,12 @@ function calcKoreanPremium(){
   const btc_krw_jpy_rate = getChange(krwBtc , krw_jpy_btc,2);
 
   const getIcon = function(rate){
-      if(rate > 0.0){
-          return rate + "%"
-      }
-      else if( rate < 0.0){
-          return rate + "%"
-      } else return rate +"%"
+    if(rate > 0.0){
+      return rate + "%"
+    }
+    else if( rate < 0.0){
+      return rate + "%"
+    } else return rate +"%"
   }
 
   const message = `
@@ -212,7 +205,7 @@ DASH:<b>${getIcon(dashRate)}</b>
 BitFlyerBTC: ￥ ${App.Exchanges.BitFlyer.ticker.ltp} X ${App.Rater_KRW.rate.rates.JPY.toFixed(4)}
 BTC: <b>${btc_krw_jpy_rate}%</b>
   `;
-    return message;
+  return message;
 }
 
 function defaultKeyboard(chatId) {
@@ -241,7 +234,7 @@ function getBittrexChange(m) {
 
 
 
-bot.on('message', (msg) => {
+bot.on('message', async (msg) => {
   const chatId = msg.chat.id;
   console.log(msg)
   const {market_summary, market_info} = App.Exchanges.Bittrex;
@@ -260,14 +253,14 @@ bot.on('message', (msg) => {
       break;
     }
     case '바이낸스': {
-      App.Exchanges.Binance.getTicker()
-        .then(r => {
-          const btc_top_ten = _.take(r.btc_market.sort((a,b) => parseInt(b.priceChangePercent, 10) - parseInt(a.priceChangePercent, 10)), 10)
-          // const eth_top_ten = _.take(r.eth_market.sort((a,b) => parseInt(b.priceChangePercent, 10) - parseInt(a.priceChangePercent, 10)), 10)
-
-          const m = btc_top_ten.map(m => `MarketName: ${m.symbol} Change: ${m.priceChangePercent}% Last: ${m.lastPrice} BTC`).join('\r\n')
-          bot.sendMessage(msg.chat.id, m);
-        })
+      const ticker = await App.Exchanges.Binance.getTicker();
+      const btc_top_ten =
+        _.take(ticker .btc_market.sort((a,b) =>
+          parseInt(b.priceChangePercent, 10) - parseInt(a.priceChangePercent, 10))
+          , 15)
+      // const eth_top_ten = _.take(r.eth_market.sort((a,b) => parseInt(b.priceChangePercent, 10) - parseInt(a.priceChangePercent, 10)), 10)
+      const m = btc_top_ten.map(m => `MarketName: ${m.symbol} Change: ${m.priceChangePercent}% Last: ${m.lastPrice} BTC`).join('\r\n')
+      bot.sendMessage(msg.chat.id, m);
       break;
     }
     case 'Cancel': {
@@ -283,82 +276,102 @@ bot.on('message', (msg) => {
             "reply_markup": {
                 "keyboard":market_array
 
-            }
-        })
-        break
+        }
+      })
+      break
     }
     case '/korbit':
     case '/코빗':
     case '코빗': {
-        let market_summary = korbit.getMarketSummary()
-        let strArr = _.map(market_summary, market => {
-          return "Korbit " + market.MarketName + ": ￦" + numberWithCommas(market.last || 0)
-        })
-
-        bot.sendMessage(chatId, strArr.join("\r\n"))
-        break
+      const market_summary = {
+        eth:{
+          MarketName:'KRW-ETH',
+          ...await App.Exchanges.Korbit.getTicker('eth'),
+        },
+        btc:{
+          MarketName:'KRW-BTC',
+          ...await App.Exchanges.Korbit.getTicker('btc'),
+        },
+        bch:{
+          MarketName:'KRW-BCH',
+          ...await App.Exchanges.Korbit.getTicker('bch'),
+        },
+        xrp:{
+          MarketName:'KRW-XRP',
+          ...await App.Exchanges.Korbit.getTicker('xrp'),
+        },
+        etc:{
+          MarketName:'KRW-ETC',
+          ...await App.Exchanges.Korbit.getTicker('etc'),
+        }
+      };
+      const strArr = _.map(market_summary, market => {
+        return "Korbit " + market.MarketName + ": ￦" + numberWithCommas(market.last || 0)
+      })
+      bot.sendMessage(chatId, strArr.join("\r\n"))
+      break
     }
     case 'COINONE':
     case '코인원': {
-
-        let ticker = coinone.getTicker()
-        let keys = Object.keys(ticker)// date??
-        keys = new Set(keys)
-        keys.delete('result')
-        keys.delete('errorCode')
-        keys.delete('timestamp')
-        keys = Array.from(keys)
-
-        let strArr = _.map(keys, (key) => "CoinOne KRW-"+ key.toUpperCase() + ": ￦" + numberWithCommas(parseInt(ticker[key].last,10)))
-        bot.sendMessage(chatId, strArr.join("\r\n"))
-
-        break
+      const ticker = await App.Exchanges.CoinOne.getTicker();
+      let keys = Object.keys(ticker)//
+      keys = new Set(keys)
+      keys.delete('result')
+      keys.delete('errorCode')
+      keys.delete('timestamp')
+      keys = Array.from(keys)
+      const strArr = _.map(keys, (key) => "CoinOne KRW-"+ key.toUpperCase() + ": ￦" + numberWithCommas(parseInt(ticker[key].last,10)))
+      bot.sendMessage(chatId, strArr.join("\r\n"))
+      break;
     }
     case 'POLO':{
-        let ticker = poloniex.getTicker()
-        let usdtTickerKey = _.filter(Object.keys(ticker), (t) =>  t.match(/^USDT_[a-z0-9A-Z]{3,6}$/))
-        let usdtTickers = _.sortBy(_.map(usdtTickerKey, (key) => {return {'name':key, 'ticker': ticker[key]}}), (m) => parseFloat(m.ticker.last,3)).reverse()
-        let strArr = _.map(usdtTickers, (m) => `Poloniex ${m.name}: $${parseFloat(m.ticker.last,10).toFixed(3)} Change: ${(parseFloat(m.ticker.percentChange,10) * 100).toFixed(4)}%`)
-        bot.sendMessage(chatId, strArr.join("\r\n"))
-        break
+      const result = await App.Exchanges.Poloniex.getTicker();
+      const usdtTickerKey = _.filter(Object.keys(result.ticker), (t) =>  t.match(/^USDT_[a-z0-9A-Z]{3,6}$/))
+      const usdtTickers = _.sortBy(_.map(usdtTickerKey, (key) => {return {'name':key, 'ticker': result.ticker[key]}}), (m) => parseFloat(m.ticker.last,3)).reverse()
+      const strArr = _.map(usdtTickers, (m) => `Poloniex ${m.name}: $${parseFloat(m.ticker.last,10).toFixed(3)} Change: ${(parseFloat(m.ticker.percentChange,10) * 100).toFixed(4)}%`)
+      bot.sendMessage(chatId, strArr.join("\r\n"))
+      break
     }
     case '빗썸': {
-        const bithumb_ticker = bithumb.getTicker()
-        let keys = Object.keys(_.omit(bithumb_ticker,'date'))// date??
-        let strArr = _.map(keys, (key) => "Bithumb KRW-"+ key + ": ￦" + numberWithCommas(parseInt(bithumb_ticker[key].closing_price,10)))
-        bot.sendMessage(chatId, strArr.join("\r\n"))
-        break
+      const bithumb_ticker = await App.Exchanges.Bithumb.getTicker();
+      const keys = Object.keys(_.omit(bithumb_ticker, 'date'))// date??
+      const strArr = _.map(keys, (key) => "Bithumb KRW-"+ key + ": ￦" + numberWithCommas(parseInt(bithumb_ticker[key].closing_price,10)))
+      bot.sendMessage(chatId, strArr.join("\r\n"))
+      break;
     }
     case '김프': {
-        bot.sendMessage(chatId, calcKoreanPremium(), {parse_mode : "HTML"})
+        bot.sendMessage(chatId, await calcKoreanPremium(), {parse_mode : "HTML"})
         break
     }
     case 'CAP':{
-        let marketCap = numberWithCommas(coinMarketCap.getSummary().total_market_cap_usd)
-        let bitPercentage = coinMarketCap.getSummary().bitcoin_percentage_of_market_cap
+      const cap_data = await App.Exchanges.CoinMarketCap.getTotalCap();
+      const top_market = await App.Exchanges.CoinMarketCap.getTopCoins();
 
-        let m = "Total Market Cap Usd: $" + marketCap + "\r\n" +
-            "BTC Dominance: " + bitPercentage + "%"
+      const marketCap = numberWithCommas(cap_data.total_market_cap_usd);
+      const bitPercentage = cap_data.bitcoin_percentage_of_market_cap;
 
-        bot.sendMessage(chatId, m)
-        break
+      const m = "Total Market Cap Usd: $" + marketCap + "\r\n" +
+          "BTC Dominance: " + bitPercentage + "%"
+      const top_m = top_market.map(market =>
+      `Rank: ${market.rank} ${market.symbol} ${market.name} MarketCap: $${numberWithCommas(parseInt(market.market_cap_usd, 10))}`
+      ).join('\r\n');
+      const top_ten_sum = top_market.map(m => parseInt(m.market_cap_usd, 10)).reduce((a, b) => a + b, 0);
+      bot.sendMessage(chatId, m)
+      bot.sendMessage(chatId, top_m + '\r\n' + `Top 10 MarketCap: $${numberWithCommas(top_ten_sum)}`)
+      break;
     }
     default :{
-
       const selected_market = _.find(market_info,{'MarketName':msg.text.replace('/','').toUpperCase()})
       if(selected_market === undefined){
           break
       }
-      // if(selected_market.LogoUrl !== null){
-      //     bot.sendPhoto(chatId, selected_market.LogoUrl);
-      // }
       const selected_market_summary = _.find(market_summary, {'MarketName':msg.text.replace('/','').toUpperCase()})
       const returnMsg = bittrextStringParse(selected_market_summary)
       bot.sendMessage(chatId, returnMsg,{parse_mode : "HTML"})
       defaultKeyboard(msg.chat.id)
       break
     }
-    }
+  }
 });
 
 module.exports.bittrexMarketParse = bittrextStringParse

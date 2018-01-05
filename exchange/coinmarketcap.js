@@ -1,32 +1,22 @@
 const axios = require('axios')
 
 const CoinMarketCap = function(){
-    if(!(this instanceof CoinMarketCap)) return new CoinMarketCap()
-
-    let global_market_summary
-    let timer
-
-    this.get_coinmarketcap_global_data = function(){
-        axios.get('https://api.coinmarketcap.com/v1/global/')
-            .then((r) => {
-                if(r.status == 200){
-                    global_market_summary = r.data
-                }
-            }).catch(err => console.log(err))
-    }
-    this.run = function(interval){
-        if(timer !== undefined){
-            console.log("Stop first")
-            return
+  this.getTopCoins = function() {
+    return axios.get('https://api.coinmarketcap.com/v1/ticker/?limit=10')
+      .then((r) => {
+        if(r.status == 200){
+          return r.data
         }
-        this.get_coinmarketcap_global_data()
-        timer = setInterval(this.get_coinmarketcap_global_data, interval)
-    }
-    this.stop = function(){
-        clearInterval(timer)
-        timer = undefined
-    }
-    this.getSummary = () => global_market_summary
+      }).catch(err => console.log(err))
+  }
+  this.getTotalCap = function(){
+    return axios.get('https://api.coinmarketcap.com/v1/global/')
+      .then((r) => {
+        if(r.status == 200){
+          return r.data
+        }
+      }).catch(err => console.log(err))
+  }
 }
 
-module.exports.CoinMarketCap = CoinMarketCap
+export default CoinMarketCap;
