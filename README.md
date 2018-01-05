@@ -1,4 +1,4 @@
-# price-checker-telegram-bot
+# crypto currency price telegram bot
 암호화폐 시세 조회 텔레그램 봇 / Telegram bot for cryptocurrency price   
 [![Coverage Status](https://coveralls.io/repos/github/forsyphilis/price-checker-telegram-bot/badge.svg?branch=development)](https://coveralls.io/github/forsyphilis/price-checker-telegram-bot?branch=development)
 
@@ -17,7 +17,7 @@
 #### # 배포 또는 실행 후 해당 텔레그램 봇 또는 텔레그램 봇이 있는 그룹 채팅에서
     /start
     
-### Todo
+### Keyboard Function
 - [x] Bittrex
 - [x] Korbit
 - [x] Binance Top 10
@@ -25,17 +25,4 @@
 - [x] Korean Premium
 - [x] Coinone
 - [x] CoinmarketCap - Bitcoin dominance, Top 10 currency
-- [x] Poloniex (only usdt market)  
-~~- [x] Upbit (browser crwaling) remove ~~
-~~- [x] Alarm -> remove~~
-~~- [x] CoinmarketCap Screenshot => /shot -> remove~~  
-
-
-### Screenshot
-![screenshot with selection](https://i.imgur.com/om83VvG.png)
-
-![screenshot with selection](https://i.imgur.com/eLTMCqA.png)
-
-![screenshot with selection](https://i.imgur.com/BOOHpau.png)
-
-
+- [x] Poloniex Top 10
