@@ -1,6 +1,6 @@
 {
   "name": "price-checker-telegram-bot",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "crytocurrency price checker bot",
   "main": "bot.js",
   "scripts": {
