@@ -4,13 +4,12 @@ import { getHowManyEmoji, numberWithCommas, getChange, getKeySymbol } from './ut
 import TelegramBot from 'node-telegram-bot-api';
 import exchanges from './exchange';
 import BitFlyer from './exchange/bitflyer';
-import Upbit from './exchange/upbit';
-const puppeteer = require('puppeteer');
-
+import Binance from './exchange/binance';
 if(!process.env.TELEGRAM_BOT_TOKEN ){
   throw "Telegram bot token missing"
 }
 const token = process.env.TELEGRAM_BOT_TOKEN
+//
 const bot = new TelegramBot(token, {polling: true})
 const App = {};
 
@@ -24,6 +23,7 @@ App.Rater_CNY.getRate();
 
 // Exchanges Timer Set
 App.Exchanges = {}
+App.Exchanges.Binance = new Binance();
 App.Exchanges.BitFlyer = new BitFlyer();
 App.Exchanges.BitFlyer_TIMER = setInterval(() => App.Exchanges.BitFlyer.getTicker(), 5000);
 App.Exchanges.BitFlyer.getTicker();
@@ -35,20 +35,20 @@ App.Exchanges.Bittrex_TIMER = setInterval(() => {
 
 
 // init headless browser
-(async () => {
-  const browser = await puppeteer.launch();
-  const page = await browser.newPage();
-  await page.goto('https://upbit.com/exchange?code=CRIX.UPBIT.KRW-BTC',
-    { waitUntil: 'networkidle2',
-      timeout: 0,
-    });
-  await page.waitForSelector('.search');
-  App.Exchanges.UpBit = new Upbit(browser, page);
-
-  App.Exchanges.UpBit_TIMER = setInterval(async () => {
-    await App.Exchanges.UpBit.get_market_summary_async();
-  }, 10000);
-})()
+// (async () => {
+//   const browser = await puppeteer.launch();
+//   const page = await browser.newPage();
+//   await page.goto('https://upbit.com/exchange?code=CRIX.UPBIT.KRW-BTC',
+//     { waitUntil: 'networkidle2',
+//       timeout: 0,
+//     });
+//   await page.waitForSelector('.search');
+//   App.Exchanges.UpBit = new Upbit(browser, page);
+//
+//   App.Exchanges.UpBit_TIMER = setInterval(async () => {
+//     await App.Exchanges.UpBit.get_market_summary_async();
+//   }, 10000);
+// })()
 
 
 const korbit = new exchanges.Korbit()
@@ -66,19 +66,10 @@ bithumb.run(5000)
 const coinone = new exchanges.Coinone()
 coinone.run(5000)
 
-const liqui = new exchanges.Liqui()
-liqui.run(5000)
-
 
 bot.onText(/\/echo (.+)/, (msg, match) => {
-    // 'msg' is the received Message from Telegram
-    // 'match' is the result of executing the regexp above on the text content
-    // of the message
-
     const chatId = msg.chat.id;
     const resp = match[1]; // the captured "whatever"
-
-// send back the matched "whatever" to the chat
     bot.sendMessage(chatId, resp);
 });
 
@@ -229,8 +220,9 @@ function defaultKeyboard(chatId) {
         "reply_markup": {
             "keyboard": [
                 ["TOP", "CAP","USDT-ETH", "USDT-BTC"],
-                ["ETH-BAT", "ETH-SNT", "USDT-BCC", "업빗"],
+                ["ETH-BAT", "ETH-SNT", "USDT-BCC"],
                 ["코빗","빗썸","코인원","김프"],
+              ["바이낸스"],
               ["POLO"],["BITTREX"]]
         }
     });
@@ -265,6 +257,17 @@ bot.on('message', (msg) => {
       let m = top.map(m => `MarketName: ${m.MarketName} Change: ${m.Change}%`).join('\r\n')
       let b = bottom.map(m => `MarketName: ${m.MarketName} Change: ${m.Change}%`).join('\r\n')
       bot.sendMessage(msg.chat.id, "<b>Bittrex Top 10 Change 🔥</b> \r\n".concat(m) + "\r\n==\r\n".concat(b),{parse_mode:"HTML"})
+      break;
+    }
+    case '바이낸스': {
+      App.Exchanges.Binance.getTicker()
+        .then(r => {
+          const btc_top_ten = _.take(r.btc_market.sort((a,b) => parseInt(b.priceChangePercent, 10) - parseInt(a.priceChangePercent, 10)), 10)
+          // const eth_top_ten = _.take(r.eth_market.sort((a,b) => parseInt(b.priceChangePercent, 10) - parseInt(a.priceChangePercent, 10)), 10)
+
+          const m = btc_top_ten.map(m => `MarketName: ${m.symbol} Change: ${m.priceChangePercent}% Last: ${m.lastPrice} BTC`).join('\r\n')
+          bot.sendMessage(msg.chat.id, m);
+        })
       break;
     }
     case 'Cancel': {
@@ -339,27 +342,6 @@ bot.on('message', (msg) => {
 
         bot.sendMessage(chatId, m)
         break
-    }
-    case 'ETH-KNC':{
-        let ticker = liqui.getMarketSummary().knc_eth
-
-        let high = `High: ${ticker.high} ETH`
-        let low =  `Low:  ${ticker.low} ETH`
-        let last = `Last: ${ticker.last} ETH`
-        let m = ['Kyber Network Token', high, low, last].join('\r\n')
-        bot.sendMessage(chatId, m)
-        break
-    }
-    case '업빗': {
-      if(App.Exchanges.UpBit.market_summary !== null){
-        const strings = App.Exchanges.UpBit.market_summary.map(m => {
-          return `${m.name} ${m.price} ${m.percent}`
-        })
-        bot.sendMessage(chatId, strings.join('\n'))
-        break;
-      }
-      bot.sendMessage(chatId, 'Something wrong!')
-      break;
     }
     default :{
 
