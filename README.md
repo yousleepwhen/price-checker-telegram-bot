@@ -6,7 +6,7 @@
     $ node index.js
 
 #### # docker 실행시 환경 변수 입력 
-    $ docker run -it --privilieged -e TELEGRAM_BOT_TOKEN=YOUR_TELEGRAM_BOT_TOKEN forsyphilis/price-checker-telegram-bot
+    $ docker run -it -e TELEGRAM_BOT_TOKEN=YOUR_TELEGRAM_BOT_TOKEN forsyphilis/price-checker-telegram-bot
 
 환경 변수에 다음을 추가해야한다. 
 
@@ -20,12 +20,14 @@
 ### Todo
 - [x] Bittrex
 - [x] Korbit
-- [x] Upbit (browser crwaling) 
+- [x] Binance Top 10
 - [x] Bithumb
 - [x] Korean Premium
 - [x] Coinone
+- [x] CoinmarketCap - Bitcoin dominance, Top 10 currency
 - [x] Poloniex (only usdt market)  
-~~- [x] Alarm -> remove~~  
+~~- [x] Upbit (browser crwaling) remove ~~
+~~- [x] Alarm -> remove~~
 ~~- [x] CoinmarketCap Screenshot => /shot -> remove~~  
 
 
