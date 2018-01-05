@@ -10,10 +10,12 @@ import CoinOne from './exchange/coinone';
 import Bithumb from './exchange/bithumb';
 import Korbit from './exchange/korbit';
 import CoinMarketCap from './exchange/coinmarketcap';
-if(!process.env.TELEGRAM_BOT_TOKEN ){
-  throw "Telegram bot token missing"
-}
-const token = process.env.TELEGRAM_BOT_TOKEN
+// if(!process.env.TELEGRAM_BOT_TOKEN ){
+//   throw "Telegram bot token missing"
+// }
+// const token = process.env.TELEGRAM_BOT_TOKEN
+const token = '433274725:AAEb_5Mv6r23atBuYG42iib0Ma7011mx4e8' //dev
+
 //
 const bot = new TelegramBot(token, {polling: true})
 const App = {};
@@ -314,29 +316,42 @@ bot.on('message', async (msg) => {
     case 'COINONE':
     case '코인원': {
       const ticker = await App.Exchanges.CoinOne.getTicker();
-      let keys = Object.keys(ticker)//
-      keys = new Set(keys)
-      keys.delete('result')
-      keys.delete('errorCode')
-      keys.delete('timestamp')
-      keys = Array.from(keys)
-      const strArr = _.map(keys, (key) => "CoinOne KRW-"+ key.toUpperCase() + ": ￦" + numberWithCommas(parseInt(ticker[key].last,10)))
-      bot.sendMessage(chatId, strArr.join("\r\n"))
+      if(ticker !== undefined) {
+        let keys = Object.keys(ticker)//
+        keys = new Set(keys)
+        keys.delete('result')
+        keys.delete('errorCode')
+        keys.delete('timestamp')
+        keys = Array.from(keys)
+        const strArr = _.map(keys, (key) => "CoinOne KRW-"+ key.toUpperCase() + ": ￦" + numberWithCommas(parseInt(ticker[key].last,10)))
+        bot.sendMessage(chatId, strArr.join("\r\n"))
+      } else {
+        bot.sendMessage(chatId, "CoinOne - Something Wrong!");
+      }
       break;
     }
     case 'POLO':{
       const result = await App.Exchanges.Poloniex.getTicker();
-      const usdtTickerKey = _.filter(Object.keys(result.ticker), (t) =>  t.match(/^USDT_[a-z0-9A-Z]{3,6}$/))
-      const usdtTickers = _.sortBy(_.map(usdtTickerKey, (key) => {return {'name':key, 'ticker': result.ticker[key]}}), (m) => parseFloat(m.ticker.last,3)).reverse()
-      const strArr = _.map(usdtTickers, (m) => `Poloniex ${m.name}: $${parseFloat(m.ticker.last,10).toFixed(3)} Change: ${(parseFloat(m.ticker.percentChange,10) * 100).toFixed(4)}%`)
-      bot.sendMessage(chatId, strArr.join("\r\n"))
+      if(result !== undefined) {
+        const usdtTickerKey = _.filter(Object.keys(result.ticker), (t) =>  t.match(/^USDT_[a-z0-9A-Z]{3,6}$/))
+        const usdtTickers = _.sortBy(_.map(usdtTickerKey, (key) => {return {'name':key, 'ticker': result.ticker[key]}}), (m) => parseFloat(m.ticker.last,3)).reverse()
+        const strArr = _.map(usdtTickers, (m) => `Poloniex ${m.name}: $${parseFloat(m.ticker.last,10).toFixed(3)} Change: ${(parseFloat(m.ticker.percentChange,10) * 100).toFixed(4)}%`)
+        bot.sendMessage(chatId, strArr.join("\r\n"))
+      } else {
+        bot.sendMessage(chatId, "Poloniex - Something Wrong!");
+      }
+
       break
     }
     case '빗썸': {
       const bithumb_ticker = await App.Exchanges.Bithumb.getTicker();
-      const keys = Object.keys(_.omit(bithumb_ticker, 'date'))// date??
-      const strArr = _.map(keys, (key) => "Bithumb KRW-"+ key + ": ￦" + numberWithCommas(parseInt(bithumb_ticker[key].closing_price,10)))
-      bot.sendMessage(chatId, strArr.join("\r\n"))
+      if(bithumb_ticker !== undefined) {
+        const keys = Object.keys(_.omit(bithumb_ticker, 'date'))// date??
+        const strArr = _.map(keys, (key) => "Bithumb KRW-"+ key + ": ￦" + numberWithCommas(parseInt(bithumb_ticker[key].closing_price,10)))
+        bot.sendMessage(chatId, strArr.join("\r\n"))
+      } else {
+        bot.sendMessage(chatId, "Bithumb - Something Wrong!");
+      }
       break;
     }
     case '김프': {

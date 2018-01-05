@@ -1,7 +1,6 @@
 const axios = require('axios')
 
 const Bithumb = function(){
-  let ticker = null;
   this.getTicker = function(){
     return axios.get('https://api.bithumb.com/public/ticker/ALL')
       .then((r) => {
@@ -11,7 +10,6 @@ const Bithumb = function(){
       })
       .catch(err => {
         console.log(err)
-        ticker = null;
     })
   }
 }
